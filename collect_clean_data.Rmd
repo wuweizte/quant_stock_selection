@@ -1,0 +1,442 @@
+---
+title: "Quant"
+author: "Wu Wei"
+date: "2018-1-25"
+output: html_document
+---
+
+
+
+## Library input
+```{r}
+rm(list = ls())
+
+suppressMessages(library(lubridate))
+suppressMessages(library(caret))
+
+suppressMessages(library(WindR))
+w.start()
+
+```
+
+## Data Input
+
+```{r}
+w_wset_data<-w.wset('sectorconstituent','date=2018-01-25;sectorid=a001010100000000')
+
+stockcode <- w_wset_data$Data$wind_code
+
+# ipodate.data<-w.wss(stockcode,'ipo_date')
+# 
+# ipodate <-w.asDateTime(ipodate.data$Data$IPO_DATE, asdate = TRUE)
+# 
+# ipodate.data <- cbind(ipodate.data$Data, data.frame(ipodate))
+# 
+# stockcode <- ipodate.data[ipodate.data$ipodate < as.Date("2017-12-1"),"CODE"]
+
+```
+
+```{r}
+
+w_tdays_data<-w.tdays("2007-12-01","2018-1-31","Period=M")
+
+tdate <- as.character(w_tdays_data$Data$DATETIME)
+
+tdate <- gsub("-","",tdate)
+```
+
+```{r}
+
+for(i in 1:length(tdate)){
+
+# for(i in 1:2){
+
+       tradedatepara <- paste0('tradeDate=', tdate[i])
+       
+      # stockcode <- "000905.SZ"
+       
+       ### the price may be NaN if the IPO data is later than 2013-12-01
+       w_wss_price <- w.wss( stockcode,
+                           'close',
+                           tradedatepara,
+                           'priceAdj=F',
+                           'cycle=D')
+       
+       w_wss_pettm <- w.wss(stockcode,
+                            'pe_ttm',
+                            tradedatepara)
+       
+       # w_wss_roe<-w.wss(stockcode,
+       #                   'fa_roenp_ttm',
+       #                   tradedatepara)
+ 
+       w_wss_industry <- w.wss(stockcode,
+                              'industry_citic',
+                              tradedatepara,
+                              'industryType=1')
+       
+        if(i == 1){
+                monthly.price.data <- w_wss_price$Data
+                monthly.pettm.data <- w_wss_pettm$Data
+                # monthly.roe.data <- w_wss_roe$Data
+                
+                monthly.industry.data <- w_wss_industry$Data
+        }else{
+                monthly.price.data <- cbind(monthly.price.data, 
+                                            w_wss_price$Data$CLOSE)
+                
+                monthly.pettm.data <- cbind(monthly.pettm.data, 
+                                            w_wss_pettm$Data$PE_TTM)
+                
+                # monthly.roe.data <- cbind(monthly.roe.data, 
+                #                             w_wss_roe$Data$FA_ROENP_TTM)
+                # 
+                                
+                monthly.industry.data <- cbind(monthly.industry.data, 
+                                           w_wss_industry$Data$INDUSTRY_CITIC)
+        }
+
+
+}
+```
+
+
+```{r}
+
+for(i in 1:length(tdate)){
+
+# for(i in 1:2){
+
+       tradedatepara <- paste0('tradeDate=', tdate[i])
+       
+
+
+       w_wss_roe<-w.wss(stockcode,
+                         'fa_roenp_ttm',
+                         tradedatepara)
+ 
+
+        if(i == 1){
+                monthly.roe.data <- w_wss_roe$Data
+                
+        }else{
+
+                monthly.roe.data <- cbind(monthly.roe.data, 
+                                            w_wss_roe$Data$FA_ROENP_TTM)
+                
+                                
+        }
+
+
+}
+```
+
+
+```{r}
+####前5大股东持股比例之和
+
+
+for(i in 1:length(tdate)){
+
+# for(i in 1:2){
+
+       tradedatepara <- paste0('tradeDate=', tdate[i])
+       
+
+
+       w_wss_holder_sumpcttop5<-w.wss(stockcode,
+                         'holder_sumpcttop5',
+                         tradedatepara)
+ 
+
+        if(i == 1){
+                monthly.holder.sumpcttop5 <- w_wss_holder_sumpcttop5$Data
+                
+        }else{
+
+                monthly.holder.sumpcttop5 <- cbind(monthly.holder.sumpcttop5, 
+                                            w_wss_holder_sumpcttop5$Data$HOLDER_SUMPCTTOP5)
+                
+                                
+        }
+
+
+}
+```
+
+```{r}
+#### 60日收益方差
+
+
+for(i in 1:length(tdate)){
+
+# for(i in 1:2){
+
+       tradedatepara <- paste0('tradeDate=', tdate[i])
+       
+
+
+       w_wss_risk_variance60<-w.wss(stockcode,
+                         'risk_variance60',
+                         tradedatepara)
+ 
+
+        if(i == 1){
+                monthly.risk.variance60 <- w_wss_risk_variance60$Data
+                
+        }else{
+
+                monthly.risk.variance60 <- cbind(monthly.risk.variance60, 
+                                            w_wss_risk_variance60$Data$RISK_VARIANCE60)
+                
+                                
+        }
+
+
+}
+```
+
+```{r}
+#### 60日平均换手率
+
+
+for(i in 1:length(tdate)){
+
+# for(i in 1:2){
+
+       tradedatepara <- paste0('tradeDate=', tdate[i])
+       
+
+
+       w_wss_tech_turnoverrate60<-w.wss(stockcode,
+                         'tech_turnoverrate60',
+                         tradedatepara)
+ 
+
+        if(i == 1){
+                monthly.tech.turnoverrate60 <- w_wss_tech_turnoverrate60$Data
+                
+        }else{
+
+                monthly.tech.turnoverrate60 <- cbind(monthly.tech.turnoverrate60, 
+                                            w_wss_tech_turnoverrate60$Data$TECH_TURNOVERRATE60)
+                
+                                
+        }
+
+
+}
+```
+
+
+```{r}
+#        w_wss_price <- w.wss(stockcode,
+#                            'close',
+#                            'tradeDate=20140331',
+#                            'priceAdj=F',
+#                            'cycle=D')
+#        w_wss_industry <- w.wss(stockcode,
+#                               'industry_citic',
+#                               'tradeDate=20140331',
+#                               'industryType=1')
+#        
+# observe <- cbind(w_wss_price$Data, w_wss_industry$Data)
+# 
+# observe[observe$INDUSTRY_CITIC == "NaN" && observe$CLOSE,]
+# 
+# 
+#        w_wss_price <- w.wss("002713.SZ",
+#                            'close',
+#                            'tradeDate=20140331',
+#                            'priceAdj=F',
+#                            'cycle=D')
+#        w_wss_industry <- w.wss("002713.SZ",
+#                               'industry_citic',
+#                               'tradeDate=20140331',
+#                               'industryType=1')
+#        
+# observe <- cbind(w_wss_price$Data, w_wss_industry$Data)
+# 
+# for(i in 1:length(tdate)){
+# 
+# # for(i in 1:2){
+# 
+#        tradedatepara <- paste0('tradeDate=', tdate[i])
+#        
+#        ### the price may be NaN if the IPO data is later than 2013-12-01
+#        w_wss_price <- w.wss("002713.SZ",
+#                            'close',
+#                            tradedatepara,
+#                            'priceAdj=F',
+#                            'cycle=D')
+#        
+#      
+#        w_wss_industry <- w.wss("002713.SZ",
+#                               'industry_citic',
+#                               tradedatepara,
+#                               'industryType=1')
+#        
+#         if(i == 1){
+#                 monthly.price.data <- w_wss_price$Data
+#                 monthly.industry.data <- w_wss_industry$Data
+#         }else{
+#                 monthly.price.data <- cbind(monthly.price.data, 
+#                                             w_wss_price$Data$CLOSE)
+#                 
+# 
+#                 monthly.industry.data <- cbind(monthly.industry.data, 
+#                                            w_wss_industry$Data$INDUSTRY_CITIC)
+#         }
+# 
+# 
+# }
+
+```
+
+
+```{r}
+colnames(monthly.price.data) <- c("code", paste0("d",tdate))
+row.names(monthly.price.data) <- monthly.price.data[,"code"]
+
+```
+
+
+
+```{r}
+colnames(monthly.pettm.data) <- c("code", paste0("d",tdate))
+# monthly.pettm.data <- monthly.pettm.data[,-2]
+
+# row.names(monthly.pettm.data) <- monthly.pettm.data[,"code"]
+# monthly.pettm.data <- monthly.pettm.data[,-1]
+
+
+# colnames(monthly.industry.data) <- c("code", tdate)
+colnames(monthly.industry.data) <- c("code", paste0("d",tdate))
+
+
+
+```
+
+```{r}
+colnames(monthly.roe.data) <- c("code", paste0("d",tdate))
+
+row.names(monthly.roe.data) <- stockcode
+
+```
+
+```{r}
+colnames(monthly.holder.sumpcttop5) <- c("code", paste0("d",tdate))
+
+row.names(monthly.holder.sumpcttop5) <- stockcode
+
+```
+
+```{r}
+colnames(monthly.risk.variance60) <- c("code", paste0("d",tdate))
+
+row.names(monthly.risk.variance60) <- stockcode
+
+```
+
+```{r}
+colnames(monthly.tech.turnoverrate60) <- c("code", paste0("d",tdate))
+
+row.names(monthly.tech.turnoverrate60) <- stockcode
+
+```
+
+
+```{r}
+nan.code.industry.data <- monthly.industry.data[monthly.industry.data[,2] == "NaN",1]
+
+for(i in 1:length(nan.code.industry.data)){
+
+# for(i in 1:2){
+
+        nan.stock.code <- nan.code.industry.data[i]
+        
+        # print(nan.stock.code)
+        
+        # nan.stock.code <- "300624.SZ"
+        
+        nan.code.industry.detail <- monthly.industry.data[monthly.industry.data[,1] == nan.stock.code,]
+        nan.code.price.detail <- monthly.price.data[monthly.price.data[,1] == nan.stock.code,]
+        
+        nan.col.id.industry <- which(nan.code.industry.detail == "NaN")
+        nan.col.id.price <- which(nan.code.price.detail == "NaN")
+        
+        nan.col.id.industry.minus.price <- setdiff(nan.col.id.industry, nan.col.id.price)
+        if(length(nan.col.id.industry.minus.price) > 0){
+                first.industry.col.id <- intersect(which(colnames(nan.code.industry.detail) != "code"), 
+                              which(nan.code.industry.detail != "NaN"))
+                
+                if(length(first.industry.col.id) > 0){
+
+                        first.industry.col.id <- min(first.industry.col.id)
+                        first.industry.name <- nan.code.industry.detail[1,first.industry.col.id]
+                        
+                        nan.code.industry.detail[1,nan.col.id.industry.minus.price] <- first.industry.name                        
+                        monthly.industry.data[monthly.industry.data[,1] == nan.stock.code,] <- nan.code.industry.detail
+                }
+
+                
+        }
+}
+```
+
+
+```{r}
+monthly.price.data <- monthly.price.data[,-1]
+monthly.price.data <- t(monthly.price.data)
+
+monthly.price.data <- diff(log(monthly.price.data))
+
+monthly.price.data[is.nan(monthly.price.data)] <- 0
+
+
+monthly.industry.data <- monthly.industry.data[,-2]
+```
+
+```{r}
+monthly.pettm.data <- monthly.pettm.data[,-1]
+```
+
+```{r}
+mean.pettm <- mean(unlist(monthly.pettm.data))
+sd.pettm <- sd(unlist(monthly.pettm.data))
+```
+
+```{r}
+monthly.roe.data <- monthly.roe.data[,-1]
+```
+
+```{r}
+monthly.holder.sumpcttop5 <- monthly.holder.sumpcttop5[,-1]
+```
+
+```{r}
+monthly.risk.variance60 <- monthly.risk.variance60[,-1]
+```
+
+```{r}
+monthly.tech.turnoverrate60 <- monthly.tech.turnoverrate60[,-1]
+```
+
+
+```{r}
+setwd("D:\\MyR\\quantprog")
+write.csv(monthly.price.data, "monthly.price.data.csv")
+write.csv(monthly.industry.data, "monthly.industry.data.csv")
+write.csv(monthly.pettm.data, "monthly.pettm.data.csv")
+write.csv(monthly.roe.data, "monthly.roe.data.csv")
+write.csv(monthly.holder.sumpcttop5, "monthly.holder.sumpcttop5.csv")
+write.csv(monthly.risk.variance60, "monthly.risk.variance60.csv")
+
+```
+
+
+```{r}
+write.csv(monthly.tech.turnoverrate60, "monthly.tech.turnoverrate60.csv")
+
+
+```
