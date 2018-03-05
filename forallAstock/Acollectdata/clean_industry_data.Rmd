@@ -1,0 +1,204 @@
+---
+title: "Quant"
+author: "Wu Wei"
+date: "2018-1-25"
+output: html_document
+---
+
+
+
+## Library input
+```{r}
+rm(list = ls())
+
+suppressMessages(library(lubridate))
+suppressMessages(library(caret))
+
+suppressMessages(library(WindR))
+w.start()
+
+```
+
+## Data Input
+
+```{r}
+w_wset_data<-w.wset('sectorconstituent','date=2018-01-25;sectorid=a001010100000000')
+
+stockcode <- w_wset_data$Data$wind_code
+
+```
+
+```{r}
+
+w_tdays_data<-w.tdays("2007-12-01","2018-1-31","Period=M")
+
+tdate <- as.character(w_tdays_data$Data$DATETIME)
+
+tdate <- gsub("-","",tdate)
+```
+
+```{r}
+
+for(i in 1:length(tdate)){
+
+# for(i in 1:2){
+
+       tradedatepara <- paste0('tradeDate=', tdate[i])
+       
+
+       ### the price may be NaN if the IPO data is later than 2013-12-01
+       w_wss_price <- w.wss( stockcode,
+                           'close',
+                           tradedatepara,
+                           'priceAdj=F',
+                           'cycle=D')
+       
+
+
+       w_wss_industry <- w.wss(stockcode,
+                              'industry_citic',
+                              tradedatepara,
+                              'industryType=1')
+       
+        if(i == 1){
+                monthly.price.data <- w_wss_price$Data
+
+                monthly.industry.data <- w_wss_industry$Data
+        }else{
+                monthly.price.data <- cbind(monthly.price.data, 
+                                            w_wss_price$Data$CLOSE)
+                
+
+                monthly.industry.data <- cbind(monthly.industry.data, 
+                                           w_wss_industry$Data$INDUSTRY_CITIC)
+        }
+
+
+}
+```
+
+
+
+
+
+
+
+
+```{r}
+colnames(monthly.price.data) <- c("code", paste0("d",tdate))
+row.names(monthly.price.data) <- monthly.price.data[,"code"]
+
+```
+
+
+
+
+
+
+
+
+```{r}
+nan.code.industry.data <- monthly.industry.data[monthly.industry.data[,2] == "NaN",1]
+
+for(i in 1:length(nan.code.industry.data)){
+
+# for(i in 1:2){
+
+        nan.stock.code <- nan.code.industry.data[i]
+
+        nan.code.industry.detail <- monthly.industry.data[monthly.industry.data[,1] == nan.stock.code,]
+        nan.code.price.detail <- monthly.price.data[monthly.price.data[,1] == nan.stock.code,]
+        
+        nan.col.id.industry <- which(nan.code.industry.detail == "NaN")
+        nan.col.id.price <- which(nan.code.price.detail == "NaN")
+        
+        nan.col.id.industry.minus.price <- setdiff(nan.col.id.industry, nan.col.id.price)
+        if(length(nan.col.id.industry.minus.price) > 0){
+                first.industry.col.id <- intersect(which(colnames(nan.code.industry.detail) != "code"), 
+                              which(nan.code.industry.detail != "NaN"))
+                
+                if(length(first.industry.col.id) > 0){
+
+                        first.industry.col.id <- min(first.industry.col.id)
+                        first.industry.name <- nan.code.industry.detail[1,first.industry.col.id]
+                        
+                        nan.code.industry.detail[1,nan.col.id.industry.minus.price] <- first.industry.name                        
+                        monthly.industry.data[monthly.industry.data[,1] == nan.stock.code,] <- nan.code.industry.detail
+                }
+
+                
+        }
+}
+```
+
+
+
+```{r}
+monthly.price.data <- monthly.price.data[,-1]
+monthly.price.data <- t(monthly.price.data)
+
+monthly.price.data <- diff(log(monthly.price.data))
+
+monthly.price.data[is.nan(monthly.price.data)] <- 0
+
+
+monthly.industry.data <- monthly.industry.data[,-2]
+```
+
+
+
+```{r}
+write.csv(monthly.price.data, "monthly.price.data.csv")
+write.csv(monthly.industry.data, "monthly.industry.data.csv")
+
+```
+
+
+
+```{r}
+monthly.price.data <- read.csv("monthly.price.data.csv")
+monthly.industry.data <- read.csv("monthly.industry.data.csv")
+
+```
+
+
+```{r}
+monthly.industry.data <- monthly.industry.data[,-1]
+
+
+```
+
+```{r}
+row.names(monthly.price.data) <- monthly.price.data[,1]
+monthly.price.data <- monthly.price.data[,-1]
+monthly.price.data <- as.matrix(monthly.price.data)
+```
+
+
+```{r}
+nan.code.industry.data <- monthly.industry.data[monthly.industry.data[,2] == "NaN",1]
+
+
+```
+
+```{r}
+sum(monthly.price.data[1,nan.code.industry.data])
+
+
+```
+
+```{r}
+result.price <- numeric(nrow(monthly.price.data))
+result.length <- numeric(nrow(monthly.price.data))
+
+for(i in 1:nrow(monthly.price.data)){
+        nan.code.industry.data <- monthly.industry.data[monthly.industry.data[,(i + 1)] == "NaN",1]
+        result.price[i] <- sum(monthly.price.data[i,nan.code.industry.data])
+        result.length[i] <- length(nan.code.industry.data)
+        
+}
+```
+
+
+
+

@@ -1,0 +1,107 @@
+---
+title: "pettm_factor_efficiency_test"
+author: "Wu Wei"
+date: "2018-1-25"
+output: html_document
+---
+
+
+
+## Library input
+```{r}
+rm(list = ls())
+
+suppressMessages(library(lubridate))
+suppressMessages(library(caret))
+suppressMessages(library(plyr))
+
+library(sca)
+
+```
+
+## Data Input
+
+```{r}
+
+monthly.price.data <- 
+        read.csv("D:\\MyR\\quantprog\\forallAstock\\Acollectdata\\monthly.price.data.csv", 
+                               stringsAsFactors = FALSE)
+
+monthly.industry.data <- 
+        read.csv("D:\\MyR\\quantprog\\forallAstock\\Acollectdata\\monthly.industry.data.csv", 
+                                  stringsAsFactors = FALSE)
+
+standardlized.monthly.pettm.data <- 
+        read.csv("D:\\MyR\\quantprog\\forallAstock\\Bstandardlizefactor\\standardlized.monthly.pettm.data.csv", 
+                                             stringsAsFactors = FALSE)
+
+monthly.industry.data <- monthly.industry.data[,-1]
+
+row.names(monthly.price.data) <- monthly.price.data[,1]
+monthly.price.data <- monthly.price.data[,-1]
+
+monthly.price.data <- as.matrix(monthly.price.data)
+```
+
+
+## Data Processing
+
+```{r}
+rm <- matrix(apply(monthly.price.data,2,mean),1)
+rtn <- monthly.price.data - matrix(1,nrow(monthly.price.data),1) %*% rm
+
+
+```
+
+
+```{r}
+
+for(i in 1:nrow(rtn)){
+
+# for(i in 1:1){
+
+        
+        mainEffects <- dummyVars(as.formula(paste0(" ~ ", colnames(monthly.industry.data)[i + 1])),
+                                 data = monthly.industry.data[,c(1,(i + 1))])
+
+        ind.dum <- predict(mainEffects, monthly.industry.data[,c(1, (i + 1))])
+
+        ind.dum <- cbind(ind.dum, standardlized.monthly.pettm.data[,(i + 1)])
+        
+        F.hat.o <- solve(crossprod(ind.dum)) %*% t(ind.dum) %*% t(rtn)[,i]
+
+        # E.hat.o <- t(rtn)[,i] - ind.dum %*% F.hat.o
+
+        fit <- summary(lm(t(rtn)[,i] ~ ind.dum - 1))
+
+        if(i == 1){
+                result.F.hat.o <- F.hat.o
+                # result.E.hat.o <- E.hat.o
+                tvalue <- cbind(fit$coefficients[,3])
+                
+        }else{
+                result.F.hat.o <- cbind(result.F.hat.o, F.hat.o)
+                # result.E.hat.o <- cbind(result.E.hat.o, E.hat.o)
+                tvalue <- cbind(tvalue,fit$coefficients[,3])
+        }
+}
+
+```
+
+
+```{r}
+mean(abs(tail(tvalue, 1)))
+
+t.test(abs(tail(tvalue, 1)))
+```
+
+```{r}
+mean(abs(tail(tvalue, 1)) > 2)
+
+```
+
+```{r}
+
+t.test(tail(result.F.hat.o, 1))
+```
+

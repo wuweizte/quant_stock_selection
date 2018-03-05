@@ -1,0 +1,92 @@
+---
+title: "Quant"
+author: "Wu Wei"
+date: "2018-1-25"
+output: html_document
+---
+
+
+
+## Library input
+```{r}
+rm(list = ls())
+
+suppressMessages(library(lubridate))
+suppressMessages(library(caret))
+suppressMessages(library(plyr))
+
+library(sca)
+
+```
+
+## Data Input
+
+```{r}
+setwd("D:\\MyR\\quantprog")
+
+monthly.pettm.data <- read.csv("monthly.pettm.data.csv", stringsAsFactors = FALSE)
+
+
+```
+
+
+## Data Processing
+
+```{r}
+processed.monthly.pettm.data <- t(monthly.pettm.data[,-1])
+
+pettm.column.names <- monthly.pettm.data$code
+
+pettm.row.names <- colnames(monthly.pettm.data)[-(1:2)]
+
+processed.monthly.pettm.data <- processed.monthly.pettm.data[-1,]
+
+processed.monthly.pettm.data <- array(as.numeric(processed.monthly.pettm.data),
+                                      dim = dim(processed.monthly.pettm.data))
+
+colnames(processed.monthly.pettm.data) <- pettm.column.names
+
+row.names(processed.monthly.pettm.data) <- pettm.row.names
+
+####delete the data of 2007-12
+processed.monthly.pettm.data <- processed.monthly.pettm.data[-1,]
+
+# processed.monthly.pettm.data[is.na(processed.monthly.pettm.data)] <- 0
+```
+
+```{r}
+
+# median.value <- apply(processed.monthly.pettm.data, 2, median)
+# md.sd <- apply(processed.monthly.pettm.data, 2, function(x) median(abs(x - median(x))))
+
+delimitvalue.monthly.pettm.data <- apply(processed.monthly.pettm.data, 2, function(x) {
+        median.value <- median(x, na.rm = TRUE)
+        md.sd <- median(abs(x - median.value), na.rm = TRUE)
+        
+        # browser()
+        uplimit <- median.value + 2 * md.sd
+        lowlimit <- median.value - 2 * md.sd
+        x[x > uplimit] <- uplimit
+        x[x < lowlimit] <- lowlimit
+        return(x)
+})
+
+```
+
+
+```{r}
+preProcValues <- preProcess(delimitvalue.monthly.pettm.data, method = c("center","scale"))
+
+standardlized.monthly.pettm.data <- predict(preProcValues, delimitvalue.monthly.pettm.data)
+
+standardlized.monthly.pettm.data[is.na(standardlized.monthly.pettm.data)] <- 0
+```
+
+
+```{r}
+setwd("D:\\MyR\\quantprog")
+write.csv(t(standardlized.monthly.pettm.data), "standardlized.monthly.pettm.data.csv")
+
+
+```
+

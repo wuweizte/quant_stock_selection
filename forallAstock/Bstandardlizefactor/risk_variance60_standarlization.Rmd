@@ -1,0 +1,106 @@
+---
+title: "Quant"
+author: "Wu Wei"
+date: "2018-1-25"
+output: html_document
+---
+
+
+
+## Library input
+```{r}
+rm(list = ls())
+
+suppressMessages(library(lubridate))
+suppressMessages(library(caret))
+suppressMessages(library(plyr))
+
+library(sca)
+
+```
+
+## Data Input
+
+```{r}
+
+monthly.risk.variance60 <- 
+        read.csv("D:\\MyR\\quantprog\\forallAstock\\Acollectdata\\monthly.risk.variance60.csv", 
+                                    stringsAsFactors = FALSE)
+
+
+```
+
+
+## Data Processing
+
+```{r}
+processed.monthly.risk.variance60 <- t(monthly.risk.variance60[,-c(1,ncol(monthly.risk.variance60))])
+
+risk.variance60.column.names <- monthly.risk.variance60[,1]
+
+risk.variance60.row.names <- colnames(monthly.risk.variance60)[-c(1, length(monthly.risk.variance60))]
+
+
+processed.monthly.risk.variance60 <- array(as.numeric(processed.monthly.risk.variance60),
+                                      dim = dim(processed.monthly.risk.variance60))
+
+colnames(processed.monthly.risk.variance60) <- risk.variance60.column.names
+
+row.names(processed.monthly.risk.variance60) <- risk.variance60.row.names
+
+####delete the data of 2018-1
+processed.monthly.risk.variance60 <- processed.monthly.risk.variance60[-nrow(processed.monthly.risk.variance60),]
+
+```
+
+```{r}
+
+
+delimitvalue.monthly.risk.variance60 <- apply(processed.monthly.risk.variance60, 1, function(x) {
+        median.value <- median(x, na.rm = TRUE)
+        md.sd <- median(abs(x - median.value), na.rm = TRUE)
+        
+        # browser()
+        uplimit <- median.value + 3 * md.sd
+        lowlimit <- median.value - 3 * md.sd
+        x[x > uplimit] <- uplimit
+        x[x < lowlimit] <- lowlimit
+        return(x)
+})
+
+```
+
+```{r}
+
+
+delimitvalue.monthly.risk.variance60 <- apply(delimitvalue.monthly.risk.variance60, 2, function(x) {
+        median.value <- median(x, na.rm = TRUE)
+        md.sd <- median(abs(x - median.value), na.rm = TRUE)
+        
+        # browser()
+        uplimit <- median.value + 3 * md.sd
+        lowlimit <- median.value - 3 * md.sd
+        x[x > uplimit] <- uplimit
+        x[x < lowlimit] <- lowlimit
+        return(x)
+})
+
+```
+
+```{r}
+preProcValues <- preProcess(delimitvalue.monthly.risk.variance60, method = c("center","scale"))
+
+standardlized.monthly.risk.variance60 <- predict(preProcValues, delimitvalue.monthly.risk.variance60)
+
+standardlized.monthly.risk.variance60[is.na(standardlized.monthly.risk.variance60)] <- 0
+```
+
+
+
+```{r}
+write.csv(standardlized.monthly.risk.variance60, 
+          "standardlized.monthly.risk.variance60.csv")
+
+
+```
+

@@ -1,0 +1,140 @@
+---
+title: "Quant"
+author: "Wu Wei"
+date: "2018-1-25"
+output: html_document
+---
+
+
+
+## Library input
+```{r}
+rm(list = ls())
+
+suppressMessages(library(lubridate))
+suppressMessages(library(caret))
+suppressMessages(library(plyr))
+
+library(sca)
+
+```
+
+## Data Input
+
+```{r}
+
+monthly.price.data <- 
+        read.csv("D:\\MyR\\quantprog\\forallAstock\\Acollectdata\\monthly.price.data.csv", 
+                               stringsAsFactors = FALSE)
+
+monthly.industry.data <- 
+        read.csv("D:\\MyR\\quantprog\\forallAstock\\Acollectdata\\monthly.industry.data.csv", 
+                                  stringsAsFactors = FALSE)
+
+monthly.industry.data <- monthly.industry.data[,-1]
+
+row.names(monthly.price.data) <- monthly.price.data[,1]
+monthly.price.data <- monthly.price.data[,-1]
+
+monthly.price.data <- as.matrix(monthly.price.data)
+```
+
+
+
+## Data Processing
+
+```{r}
+rm <- matrix(apply(monthly.price.data,2,mean),1)
+rtn <- monthly.price.data - matrix(1,nrow(monthly.price.data),1) %*% rm
+
+# rtn <- monthly.price.data
+```
+
+
+
+```{r}
+
+for(i in 1:nrow(rtn)){
+
+# for(i in 1:1){
+
+        
+        mainEffects <- dummyVars(as.formula(paste0(" ~ ", colnames(monthly.industry.data)[i + 1])),
+                                 data = monthly.industry.data[,c(1,(i + 1))])
+
+        ind.dum <- predict(mainEffects, monthly.industry.data[,c(1, (i + 1))])
+
+        F.hat.o <- solve(crossprod(ind.dum)) %*% t(ind.dum) %*% t(rtn)[,i]
+
+        E.hat.o <- t(rtn)[,i] - ind.dum %*% F.hat.o
+
+        if(i == 1){
+                result.F.hat.o <- F.hat.o
+                result.E.hat.o <- E.hat.o
+        }else{
+                result.F.hat.o <- cbind(result.F.hat.o, F.hat.o)
+                result.E.hat.o <- cbind(result.E.hat.o, E.hat.o)
+        }
+}
+
+```
+
+
+```{r}
+current.row.names <- row.names(result.F.hat.o)
+row.names(result.F.hat.o) <- substr(current.row.names, 10, nchar(current.row.names))
+
+colnames(result.F.hat.o) <- colnames(t(rtn))
+
+
+```
+
+```{r}
+diagD.hat.o <- apply(result.E.hat.o,1,var)
+
+Dinv.hat <- diag(diagD.hat.o^(-1))
+
+```
+
+
+```{r}
+
+for(i in 1:nrow(rtn)){
+
+# for(i in 1:1){
+
+        
+        mainEffects <- dummyVars(as.formula(paste0(" ~ ", colnames(monthly.industry.data)[i + 1])),
+                                 data = monthly.industry.data[,c(1,(i + 1))])
+
+        ind.dum <- predict(mainEffects, monthly.industry.data[,c(1, (i + 1))])
+
+        Hmtx <- solve(t(ind.dum) %*% Dinv.hat %*% ind.dum) %*% t(ind.dum) %*% Dinv.hat
+                
+        F.hat.g <- Hmtx %*%  t(rtn)[,i]
+
+        # E.hat.g <- t(rtn)[,i] - ind.dum %*% F.hat.g
+
+        if(i == 1){
+                result.F.hat.g <- F.hat.g
+                # result.E.hat.g <- E.hat.g
+        }else{
+                result.F.hat.g <- cbind(result.F.hat.g, F.hat.g)
+                # result.E.hat.g <- cbind(result.E.hat.g, E.hat.g)
+        }
+}
+
+```
+
+```{r}
+current.row.names <- row.names(result.F.hat.g)
+row.names(result.F.hat.g) <- substr(current.row.names, 10, nchar(current.row.names))
+
+colnames(result.F.hat.g) <- colnames(t(rtn))
+
+
+```
+
+
+
+

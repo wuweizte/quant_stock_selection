@@ -1,0 +1,112 @@
+---
+title: "Quant"
+author: "Wu Wei"
+date: "2018-1-25"
+output: html_document
+---
+
+
+
+## Library input
+```{r}
+rm(list = ls())
+
+suppressMessages(library(lubridate))
+suppressMessages(library(caret))
+suppressMessages(library(plyr))
+
+library(sca)
+
+```
+
+## Data Input
+
+```{r}
+monthly.deductprofit.simple.rate <- read.csv("D:\\MyR\\quantprog\\Acollectdata\\monthly.deductprofit.simple.rate.csv", 
+                                      stringsAsFactors = FALSE)
+
+
+```
+
+
+## Data Processing
+
+```{r}
+
+processed.monthly.deductprofit.simple.rate <- monthly.deductprofit.simple.rate[,-1]
+
+
+row.names(processed.monthly.deductprofit.simple.rate) <- monthly.deductprofit.simple.rate[,1]
+
+
+```
+
+
+
+```{r}
+
+delimitvalue.monthly.deductprofit.simple.rate <- 
+        apply(processed.monthly.deductprofit.simple.rate, 2, function(x) {
+                
+        median.value <- median(x, na.rm = TRUE)
+        md.sd <- median(abs(x - median.value), na.rm = TRUE)
+
+        # browser()
+        
+        if(md.sd == 0){
+                md.sd <- sd(x)
+        }
+        
+        uplimit <- median.value + 3 * md.sd
+        lowlimit <- median.value - 3 * md.sd
+        x[x > uplimit] <- uplimit
+        x[x < lowlimit] <- lowlimit
+        return(x)
+})
+
+```
+
+
+
+```{r}
+### 两次去极值
+
+delimitvalue.monthly.deductprofit.simple.rate <- apply(delimitvalue.monthly.deductprofit.simple.rate, 2, function(x) {
+        median.value <- median(x, na.rm = TRUE)
+        md.sd <- median(abs(x - median.value), na.rm = TRUE)
+
+        # browser()
+        if(md.sd == 0){
+                md.sd <- sd(x)
+        }
+
+        
+        uplimit <- median.value + 3 * md.sd
+        lowlimit <- median.value - 3 * md.sd
+        x[x > uplimit] <- uplimit
+        x[x < lowlimit] <- lowlimit
+        return(x)
+})
+
+```
+
+
+
+```{r}
+preProcValues <- preProcess(delimitvalue.monthly.deductprofit.simple.rate, method = c("center","scale"))
+
+standardlized.monthly.deductprofit.simple.rate <- predict(preProcValues, delimitvalue.monthly.deductprofit.simple.rate)
+
+standardlized.monthly.deductprofit.simple.rate[is.na(standardlized.monthly.deductprofit.simple.rate)] <- 0
+```
+
+
+
+```{r}
+
+write.csv(standardlized.monthly.deductprofit.simple.rate, 
+          "D:\\MyR\\quantprog\\Bstandardlizefactor\\standardlized.monthly.deductprofit.simple.rate.csv")
+
+
+```
+

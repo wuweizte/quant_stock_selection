@@ -1,0 +1,105 @@
+---
+title: "Multi_colinearity_test"
+author: "Wu Wei"
+date: "2018-2-23"
+output: html_document
+---
+
+
+
+## Library input
+```{r}
+rm(list = ls())
+
+suppressMessages(library(lubridate))
+suppressMessages(library(caret))
+suppressMessages(library(plyr))
+
+library(sca)
+
+```
+
+## Data Input
+
+```{r}
+
+monthly.price.data <- 
+        read.csv("D:\\MyR\\quantprog\\forallAstock\\Acollectdata\\monthly.price.data.csv", 
+                               stringsAsFactors = FALSE)
+
+
+standardlized.monthly.pettm.data <- 
+        read.csv("D:\\MyR\\quantprog\\forallAstock\\Bstandardlizefactor\\standardlized.monthly.pettm.data.csv", 
+                                                    stringsAsFactors = FALSE)
+
+
+standardlized.monthly.tech.turnoverrate60 <- 
+        read.csv("D:\\MyR\\quantprog\\forallAstock\\Bstandardlizefactor\\standardlized.monthly.tech.turnoverrate60.csv", 
+                                                    stringsAsFactors = FALSE)
+
+standardlized.monthly.deductprofit.simple.rate <- 
+        read.csv("D:\\MyR\\quantprog\\forallAstock\\Bstandardlizefactor\\standardlized.monthly.deductprofit.simple.rate.csv", 
+                                                    stringsAsFactors = FALSE)
+
+standardlized.monthly.momentum.12month <- 
+        read.csv("D:\\MyR\\quantprog\\forallAstock\\Bstandardlizefactor\\standardlized.monthly.momentum.12month.csv", 
+                                                    stringsAsFactors = FALSE)
+
+standardlized.monthly.val.lnmv <- 
+        read.csv("D:\\MyR\\quantprog\\forallAstock\\Bstandardlizefactor\\standardlized.monthly.val.lnmv.csv", 
+                                                    stringsAsFactors = FALSE)
+
+
+```
+
+
+## Data Processing
+
+```{r}
+row.names(monthly.price.data) <- monthly.price.data[,1]
+monthly.price.data <- monthly.price.data[,-1]
+
+monthly.price.data <- as.matrix(monthly.price.data)
+```
+
+```{r}
+rm <- matrix(apply(monthly.price.data,2,mean),1)
+rtn <- monthly.price.data - matrix(1,nrow(monthly.price.data),1) %*% rm
+
+```
+
+
+```{r}
+month.length <- ncol(standardlized.monthly.pettm.data) - 1
+
+f.result <- numeric(month.length)
+
+for(i in 1:month.length){
+# for(i in 1:1){
+        
+        var.table <- cbind( standardlized.monthly.pettm.data[,(i + 1)],
+              standardlized.monthly.tech.turnoverrate60[,(i + 1)],
+              standardlized.monthly.deductprofit.simple.rate[,(i + 1)],
+              standardlized.monthly.momentum.12month[,(i + 1)],
+              standardlized.monthly.val.lnmv[,(i + 1)])
+        
+
+        fit.resid <- lm(rtn[i,] ~ var.table - 1)
+
+        fit.sigma.square <- lm(I(fit.resid$residuals^2) ~ var.table - 1) 
+
+        f.result[i] <- summary(fit.sigma.square)$fstatistic["value"]
+}
+
+
+```
+
+```{r}
+mean(abs(f.result))
+
+median(abs(f.result))
+
+pf(5.4, 5, 3476, lower.tail = FALSE)
+```
+
+

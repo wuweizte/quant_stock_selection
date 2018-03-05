@@ -1,0 +1,463 @@
+---
+title: "Quant"
+author: "Wu Wei"
+date: "2018-1-25"
+output: html_document
+---
+
+
+
+## Library input
+```{r}
+rm(list = ls())
+
+suppressMessages(library(lubridate))
+suppressMessages(library(caret))
+
+suppressMessages(library(WindR))
+w.start()
+
+```
+
+## Data Input
+
+```{r}
+w_wset_data<-w.wset('sectorconstituent','date=2018-01-25;sectorid=a001010100000000')
+
+stockcode <- w_wset_data$Data$wind_code
+
+```
+
+```{r}
+
+w_tdays_data<-w.tdays("2007-12-01","2018-1-31","Period=M")
+
+tdate <- as.character(w_tdays_data$Data$DATETIME)
+
+tdate <- gsub("-","",tdate)
+```
+
+```{r}
+
+for(i in 1:length(tdate)){
+
+# for(i in 1:2){
+
+       tradedatepara <- paste0('tradeDate=', tdate[i])
+       
+
+       ### the price may be NaN if the IPO data is later than 2013-12-01
+       w_wss_price <- w.wss( stockcode,
+                           'close',
+                           tradedatepara,
+                           'priceAdj=F',
+                           'cycle=D')
+       
+       w_wss_pettm <- w.wss(stockcode,
+                            'pe_ttm',
+                            tradedatepara)
+       
+
+       w_wss_industry <- w.wss(stockcode,
+                              'industry_citic',
+                              tradedatepara,
+                              'industryType=1')
+       
+        if(i == 1){
+                monthly.price.data <- w_wss_price$Data
+                monthly.pettm.data <- w_wss_pettm$Data
+                # monthly.roe.data <- w_wss_roe$Data
+                
+                monthly.industry.data <- w_wss_industry$Data
+        }else{
+                monthly.price.data <- cbind(monthly.price.data, 
+                                            w_wss_price$Data$CLOSE)
+                
+                monthly.pettm.data <- cbind(monthly.pettm.data, 
+                                            w_wss_pettm$Data$PE_TTM)
+                
+
+                monthly.industry.data <- cbind(monthly.industry.data, 
+                                           w_wss_industry$Data$INDUSTRY_CITIC)
+        }
+
+
+}
+```
+
+
+```{r}
+
+for(i in 1:length(tdate)){
+
+# for(i in 1:2){
+
+       tradedatepara <- paste0('tradeDate=', tdate[i])
+       
+
+
+       w_wss_roe<-w.wss(stockcode,
+                         'fa_roenp_ttm',
+                         tradedatepara)
+ 
+
+        if(i == 1){
+                monthly.roe.data <- w_wss_roe$Data
+                
+        }else{
+
+                monthly.roe.data <- cbind(monthly.roe.data, 
+                                            w_wss_roe$Data$FA_ROENP_TTM)
+                
+                                
+        }
+
+
+}
+```
+
+```{r}
+#### 60日收益方差
+#### 60日平均换手率
+####前5大股东持股比例之和
+
+
+for(i in 1:length(tdate)){
+
+
+       tradedatepara <- paste0('tradeDate=', tdate[i])
+
+       w_wss_risk_variance60<-w.wss(stockcode,
+                         'risk_variance60',
+                         tradedatepara)
+ 
+       w_wss_tech_turnoverrate60<-w.wss(stockcode,
+                         'tech_turnoverrate60',
+                         tradedatepara)
+
+       w_wss_holder_sumpcttop5<-w.wss(stockcode,
+                         'holder_sumpcttop5',
+                         tradedatepara)
+
+        if(i == 1){
+                monthly.risk.variance60 <- w_wss_risk_variance60$Data
+                monthly.tech.turnoverrate60 <- w_wss_tech_turnoverrate60$Data
+                monthly.holder.sumpcttop5 <- w_wss_holder_sumpcttop5$Data
+                
+        }else{
+
+                monthly.risk.variance60 <- cbind(monthly.risk.variance60, 
+                                            w_wss_risk_variance60$Data$RISK_VARIANCE60)
+                
+                monthly.tech.turnoverrate60 <- cbind(monthly.tech.turnoverrate60, 
+                                            w_wss_tech_turnoverrate60$Data$TECH_TURNOVERRATE60)
+
+                monthly.holder.sumpcttop5 <- cbind(monthly.holder.sumpcttop5,
+                                            w_wss_holder_sumpcttop5$Data$HOLDER_SUMPCTTOP5)
+
+                                                
+        }
+
+
+}
+```
+
+```{r}
+####万德平均评级
+
+
+# for(i in 1:length(tdate)){
+
+for(i in 1:1){
+
+       tradedatepara <- paste0('tradeDate=', tdate[i])
+       w_wss_rating_avg<-w.wss(stockcode,'rating_avg',tradedatepara)
+
+        if(i == 1){
+                monthly.rating.avg <- w_wss_rating_avg$Data
+                
+        }else{
+
+                monthly.rating.avg <- cbind(monthly.rating.avg,
+                                            w_wss_rating_avg$Data$RATING_AVG)
+
+                                
+        }
+
+
+}
+```
+
+
+```{r}
+####对数市值
+
+
+for(i in 1:length(tdate)){
+
+# for(i in 1:2){
+
+       tradedatepara <- paste0('tradeDate=', tdate[i])
+       w_wss_val_lnmv<-w.wss(stockcode,'val_lnmv',tradedatepara)
+
+        if(i == 1){
+                monthly.val.lnmv <- w_wss_val_lnmv$Data
+                
+        }else{
+
+                monthly.val.lnmv <- cbind(monthly.val.lnmv,
+                                            w_wss_val_lnmv$Data$VAL_LNMV)
+
+                                
+        }
+
+
+}
+```
+
+
+
+
+```{r}
+w_wsd_hushen300<-w.wsd("000300.SH","close","2007-12-01","2018-1-31","Period=M;PriceAdj=F")
+
+hushen300.monthly.price <- w_wsd_hushen300$Data$CLOSE
+
+```
+
+
+```{r}
+colnames(monthly.price.data) <- c("code", paste0("d",tdate))
+row.names(monthly.price.data) <- monthly.price.data[,"code"]
+
+```
+
+
+
+```{r}
+colnames(monthly.pettm.data) <- c("code", paste0("d",tdate))
+colnames(monthly.industry.data) <- c("code", paste0("d",tdate))
+
+```
+
+```{r}
+colnames(monthly.roe.data) <- c("code", paste0("d",tdate))
+
+row.names(monthly.roe.data) <- stockcode
+
+```
+
+```{r}
+colnames(monthly.holder.sumpcttop5) <- c("code", paste0("d",tdate))
+
+row.names(monthly.holder.sumpcttop5) <- stockcode
+
+```
+
+```{r}
+colnames(monthly.risk.variance60) <- c("code", paste0("d",tdate))
+
+row.names(monthly.risk.variance60) <- stockcode
+
+```
+
+```{r}
+colnames(monthly.tech.turnoverrate60) <- c("code", paste0("d",tdate))
+
+row.names(monthly.tech.turnoverrate60) <- stockcode
+
+```
+
+```{r}
+colnames(monthly.rating.avg) <- c("code", paste0("d",tdate))
+
+row.names(monthly.rating.avg) <- stockcode
+
+```
+
+```{r}
+colnames(monthly.val.lnmv) <- c("code", paste0("d",tdate))
+
+row.names(monthly.val.lnmv) <- stockcode
+
+```
+
+
+```{r}
+#####扣除非经常性损益后的净利润
+w_tdays_data<-w.tdays("2007-6-01","2018-1-31","Period=M")
+
+tdate <- as.character(w_tdays_data$Data$DATETIME)
+
+tdate <- gsub("-","",tdate)
+
+for(i in 1:length(tdate)){
+
+# for(i in 1:2){
+
+       tradedatepara <- paste0('tradeDate=', tdate[i])
+       
+       w_wss_deductprofit_ttm<-w.wss(stockcode,'fa_deductprofit_ttm',tradedatepara)
+
+
+        if(i == 1){
+                monthly.deductprofit.ttm <- w_wss_deductprofit_ttm$Data
+                
+        }else{
+                monthly.deductprofit.ttm <- cbind(monthly.deductprofit.ttm, 
+                                            w_wss_deductprofit_ttm$Data$FA_DEDUCTPROFIT_TTM)
+
+
+        }
+
+}
+```
+
+```{r}
+colnames(monthly.deductprofit.ttm) <- c("code", paste0("d",tdate))
+
+row.names(monthly.deductprofit.ttm) <- stockcode
+
+```
+
+```{r}
+
+w_tdays_data<-w.tdays("2006-12-01","2007-12-31","Period=M")
+
+tdate.momentum <- as.character(w_tdays_data$Data$DATETIME)
+
+tdate.momentum <- gsub("-","",tdate.momentum)
+```
+
+```{r}
+
+# for(i in 1:length(tdate.momentum)){
+
+for(i in 1:2){
+
+       tradedatepara <- paste0('tradeDate=', tdate.momentum[i])
+       
+       w_wss_price <- w.wss( stockcode,
+                           'close',
+                           tradedatepara,
+                           'priceAdj=F',
+                           'cycle=D')
+       
+
+        if(i == 1){
+                monthly.price.early.data <- w_wss_price$Data
+        }else{
+                monthly.price.early.data <- cbind(monthly.price.early.data, 
+                                            w_wss_price$Data$CLOSE)
+                
+        }
+
+
+}
+```
+
+
+
+```{r}
+nan.code.industry.data <- monthly.industry.data[monthly.industry.data[,2] == "NaN",1]
+
+for(i in 1:length(nan.code.industry.data)){
+
+# for(i in 1:2){
+
+        nan.stock.code <- nan.code.industry.data[i]
+        
+        # print(nan.stock.code)
+        
+        # nan.stock.code <- "300624.SZ"
+        
+        nan.code.industry.detail <- monthly.industry.data[monthly.industry.data[,1] == nan.stock.code,]
+        nan.code.price.detail <- monthly.price.data[monthly.price.data[,1] == nan.stock.code,]
+        
+        nan.col.id.industry <- which(nan.code.industry.detail == "NaN")
+        nan.col.id.price <- which(nan.code.price.detail == "NaN")
+        
+        nan.col.id.industry.minus.price <- setdiff(nan.col.id.industry, nan.col.id.price)
+        if(length(nan.col.id.industry.minus.price) > 0){
+                first.industry.col.id <- intersect(which(colnames(nan.code.industry.detail) != "code"), 
+                              which(nan.code.industry.detail != "NaN"))
+                
+                if(length(first.industry.col.id) > 0){
+
+                        first.industry.col.id <- min(first.industry.col.id)
+                        first.industry.name <- nan.code.industry.detail[1,first.industry.col.id]
+                        
+                        nan.code.industry.detail[1,nan.col.id.industry.minus.price] <- first.industry.name                        
+                        monthly.industry.data[monthly.industry.data[,1] == nan.stock.code,] <- nan.code.industry.detail
+                }
+
+                
+        }
+}
+```
+
+
+
+```{r}
+monthly.price.data <- monthly.price.data[,-1]
+monthly.price.data <- t(monthly.price.data)
+
+monthly.price.data <- diff(log(monthly.price.data))
+
+monthly.price.data[is.nan(monthly.price.data)] <- 0
+
+
+monthly.industry.data <- monthly.industry.data[,-2]
+```
+
+```{r}
+hushen300.monthly.price <- cbind(diff(log(hushen300.monthly.price)))
+
+row.names(hushen300.monthly.price) <- paste0("d",tdate[-1])
+ 
+
+
+```
+
+
+```{r}
+monthly.pettm.data <- monthly.pettm.data[,-1]
+```
+
+```{r}
+mean.pettm <- mean(unlist(monthly.pettm.data))
+sd.pettm <- sd(unlist(monthly.pettm.data))
+```
+
+```{r}
+monthly.roe.data <- monthly.roe.data[,-1]
+monthly.holder.sumpcttop5 <- monthly.holder.sumpcttop5[,-1]
+monthly.risk.variance60 <- monthly.risk.variance60[,-1]
+monthly.tech.turnoverrate60 <- monthly.tech.turnoverrate60[,-1]
+monthly.deductprofit.rate <- t(monthly.deductprofit.ttm[,-1])
+
+monthly. <- monthly.tech.turnoverrate60[,-1]
+
+monthly.val.lnmv <- monthly.val.lnmv[,-1]
+```
+
+
+
+```{r}
+# setwd("D:\\MyR\\quantprog")
+write.csv(monthly.price.data, "monthly.price.data.csv")
+write.csv(monthly.industry.data, "monthly.industry.data.csv")
+write.csv(monthly.pettm.data, "monthly.pettm.data.csv")
+write.csv(monthly.roe.data, "monthly.roe.data.csv")
+write.csv(monthly.holder.sumpcttop5, "monthly.holder.sumpcttop5.csv")
+write.csv(monthly.risk.variance60, "monthly.risk.variance60.csv")
+write.csv(monthly.tech.turnoverrate60, "monthly.tech.turnoverrate60.csv")
+
+write.csv(hushen300.monthly.price, "hushen300.monthly.price.csv")
+
+write.csv(monthly.deductprofit.rate, "originaldata.deductprofit.rate.csv")
+
+write.csv(monthly.val.lnmv, "monthly.val.lnmv.csv")
+```
+
+

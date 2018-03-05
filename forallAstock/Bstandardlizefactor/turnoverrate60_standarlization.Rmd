@@ -1,0 +1,106 @@
+---
+title: "Quant"
+author: "Wu Wei"
+date: "2018-1-25"
+output: html_document
+---
+
+
+
+## Library input
+```{r}
+rm(list = ls())
+
+suppressMessages(library(lubridate))
+suppressMessages(library(caret))
+suppressMessages(library(plyr))
+
+library(sca)
+
+```
+
+## Data Input
+
+```{r}
+
+monthly.tech.turnoverrate60 <- 
+        read.csv("D:\\MyR\\quantprog\\forallAstock\\Acollectdata\\monthly.tech.turnoverrate60.csv", 
+                                        stringsAsFactors = FALSE)
+
+
+```
+
+
+## Data Processing
+
+```{r}
+processed.monthly.tech.turnoverrate60 <- t(monthly.tech.turnoverrate60[,-c(1,ncol(monthly.tech.turnoverrate60))])
+
+turnoverrate60.data.column.names <- monthly.tech.turnoverrate60[,1]
+
+turnoverrate60.data.row.names <- colnames(monthly.tech.turnoverrate60)[-c(1, length(monthly.tech.turnoverrate60))]
+
+
+processed.monthly.tech.turnoverrate60 <- array(as.numeric(processed.monthly.tech.turnoverrate60),
+                                      dim = dim(processed.monthly.tech.turnoverrate60))
+
+colnames(processed.monthly.tech.turnoverrate60) <- turnoverrate60.data.column.names
+
+row.names(processed.monthly.tech.turnoverrate60) <- turnoverrate60.data.row.names
+
+####delete the data of 2018-1
+processed.monthly.tech.turnoverrate60 <- processed.monthly.tech.turnoverrate60[-nrow(processed.monthly.tech.turnoverrate60),]
+
+```
+
+```{r}
+
+
+delimitvalue.monthly.tech.turnoverrate60 <- apply(processed.monthly.tech.turnoverrate60, 1, function(x) {
+        median.value <- median(x, na.rm = TRUE)
+        md.sd <- median(abs(x - median.value), na.rm = TRUE)
+        
+        # browser()
+        uplimit <- median.value + 3 * md.sd
+        lowlimit <- median.value - 3 * md.sd
+        x[x > uplimit] <- uplimit
+        x[x < lowlimit] <- lowlimit
+        return(x)
+})
+
+```
+
+```{r}
+
+
+delimitvalue.monthly.tech.turnoverrate60 <- apply(delimitvalue.monthly.tech.turnoverrate60, 2, function(x) {
+        median.value <- median(x, na.rm = TRUE)
+        md.sd <- median(abs(x - median.value), na.rm = TRUE)
+        
+        # browser()
+        uplimit <- median.value + 3 * md.sd
+        lowlimit <- median.value - 3 * md.sd
+        x[x > uplimit] <- uplimit
+        x[x < lowlimit] <- lowlimit
+        return(x)
+})
+
+```
+
+```{r}
+preProcValues <- preProcess(delimitvalue.monthly.tech.turnoverrate60, method = c("center","scale"))
+
+standardlized.monthly.tech.turnoverrate60 <- predict(preProcValues, delimitvalue.monthly.tech.turnoverrate60)
+
+standardlized.monthly.tech.turnoverrate60[is.na(standardlized.monthly.tech.turnoverrate60)] <- 0
+```
+
+
+
+
+```{r}
+write.csv(standardlized.monthly.tech.turnoverrate60, "standardlized.monthly.tech.turnoverrate60.csv")
+
+
+```
+

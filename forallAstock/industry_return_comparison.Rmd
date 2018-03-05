@@ -1,0 +1,225 @@
+---
+title: "Quant"
+author: "Wu Wei"
+date: "2018-1-25"
+output: html_document
+---
+
+
+
+## Library input
+```{r}
+rm(list = ls())
+
+suppressMessages(library(lubridate))
+suppressMessages(library(caret))
+suppressMessages(library(plyr))
+
+library(sca)
+
+```
+
+## Data Input
+
+```{r}
+setwd("D:\\MyR\\quantprog")
+
+monthly.price.data <- read.csv("monthly.price.data.csv", stringsAsFactors = FALSE)
+monthly.industry.data <- read.csv("monthly.industry.data.csv", stringsAsFactors = FALSE)
+
+monthly.industry.data <- monthly.industry.data[,-1]
+
+row.names(monthly.price.data) <- monthly.price.data[,1]
+monthly.price.data <- monthly.price.data[,-1]
+
+monthly.price.data <- as.matrix(monthly.price.data)
+```
+
+## production of industry monthly return data
+
+```{r}
+# industry.data <- w.wss(stockcode,'industry_citic','tradeDate=20180125','industryType=1')
+# df.industry.type <- industry.data$Data
+
+# mainEffects <- dummyVars(~ INDUSTRY_CITIC, data = df.industry.type)
+# 
+# dummy.table <- predict(mainEffects, df.industry.type)
+# 
+# industry.type.data <- cbind(df.industry.type$CODE, dummy.table)
+# 
+# colnames(industry.type.data)[1] <- 'code'
+
+
+```
+
+```{r}
+
+
+# mainEffects <- dummyVars(~ d20140228, data = monthly.industry.data[,c("code","d20140228")])
+# dummy.table <- predict(mainEffects, monthly.industry.data[,c("code","d20140228")])
+# 
+# monthly.industry.return.sum <- monthly.price.data[row.names(monthly.price.data) == "d20140228",] %*% dummy.table
+# 
+# monthly.industry.return.sum <- monthly.industry.return.sum[1,]
+# 
+# monthly.industry.corporation.count <- apply(dummy.table,2,sum)
+# # #
+# monthly.industry.avg.return <- monthly.industry.return.sum / monthly.industry.corporation.count
+# 
+# View(t(data.frame(monthly.industry.return.sum,
+#            monthly.industry.corporation.count,
+#            monthly.industry.avg.return)
+# ))
+```
+
+```{r}
+
+
+for(i in 1:nrow(monthly.price.data)){
+        
+        mainEffects <- dummyVars(as.formula(paste0(" ~ ", colnames(monthly.industry.data)[i + 1])), 
+                                 data = monthly.industry.data[,c(1,(i + 1))])
+        
+        dummy.table <- predict(mainEffects, monthly.industry.data[,c(1, (i + 1))])
+        
+        monthly.industry.return.sum <- monthly.price.data[i,] %*% dummy.table
+        monthly.industry.return.sum <- monthly.industry.return.sum[1,]
+        
+        monthly.industry.corporation.count <- apply(dummy.table,2,sum)
+        
+        monthly.industry.avg.return <- monthly.industry.return.sum / monthly.industry.corporation.count
+        
+
+        if(i == 1){
+                result.industry.avg.return <- monthly.industry.avg.return
+        }else{
+                result.industry.avg.return <- rbind(result.industry.avg.return, monthly.industry.avg.return)
+        }
+}
+
+```
+
+```{r}
+
+tdate <- row.names(monthly.price.data)
+row.names(result.industry.avg.return) <- tdate
+
+current.col.names <- colnames(result.industry.avg.return)
+colnames(result.industry.avg.return) <- substr(current.col.names, 10, nchar(current.col.names))
+
+result.industry.avg.return <- result.industry.avg.return[,-1]
+
+```
+
+## industry total return & industry monthly sharp ratio 
+
+
+```{r}
+
+result.industry.return.summary <- apply(result.industry.avg.return, 2, sum)
+
+result.industry.total.return <- result.industry.return.summary[order(result.industry.return.summary)]
+
+cat("The total return ratio during 2008 ~ 2018 :\n\n")
+paste0(names(result.industry.total.return), " : ",
+       percent((exp(result.industry.total.return) - 1),d = 2, sep = ""))
+```
+
+```{r}
+
+result.industry.sharp <- apply(result.industry.avg.return, 2, function(x) (mean(x) - 0.03/12)/sd(x))
+
+cat("The monthly sharp ratio during 2008 ~ 2018 :\n\n")
+
+round(result.industry.sharp[order(result.industry.sharp)],digits = 4)
+```
+
+
+## industry monthly & yearly comparison
+
+
+```{r}
+df.industry.monthly.return <- data.frame(t(result.industry.avg.return))
+
+industry.name <- row.names(df.industry.monthly.return)
+
+View(sapply(df.industry.monthly.return, 
+            function(x) {
+                    
+                    name <- industry.name[order(x, decreasing = TRUE)]
+                    return <- x[order(x, decreasing = TRUE)]
+                    return <- percent(exp(return) - 1,d = 2, sep = "")
+                    
+                    result <- paste0(name, " : ", return)
+                    head(result,3)
+            }
+                    
+            )
+     )
+```
+
+
+
+
+```{r}
+
+result.industry.yearly.return <- sapply(data.frame(result.industry.avg.return),
+       function(x) sapply(split(x, substr(tdate,1,5)),sum))
+
+df.industry.yearly.return <- data.frame(t(result.industry.yearly.return))
+
+industry.name <- row.names(df.industry.yearly.return)
+
+View(sapply(df.industry.yearly.return, 
+            function(x) {
+                    
+                    name <- industry.name[order(x, decreasing = TRUE)]
+                    return <- x[order(x, decreasing = TRUE)]
+                    return <- percent(exp(return) - 1,d = 2, sep = "")
+                    
+                    result <- paste0(name, " : ", return)
+                    
+                    return(c(head(result,5), "",tail(result,5)))
+            }
+                    
+            )
+     )
+```
+
+```{r}
+high.return.industry <- sapply(df.industry.yearly.return, 
+            function(x) {
+                    
+                    name <- industry.name[order(x, decreasing = TRUE)]
+                    
+                    return(c(head(name,5)))
+            }
+                    
+            )
+
+
+high.return.industry.count <- count(unlist(data.frame(high.return.industry)))
+
+cat("The appearing count in the highest 5 ranking list during 2008 ~ 2018 :\n\n")
+
+head(high.return.industry.count[order(high.return.industry.count$freq, decreasing = TRUE),],5)
+```
+
+```{r}
+low.return.industry <- sapply(df.industry.yearly.return, 
+            function(x) {
+                    
+                    name <- industry.name[order(x, decreasing = TRUE)]
+                    
+                    return(c(tail(name,5)))
+            }
+                    
+            )
+
+
+low.return.industry.count <- count(unlist(data.frame(low.return.industry)))
+
+cat("The appearing count in the lowest 5 ranking list during 2008 ~ 2018 :\n\n")
+
+head(low.return.industry.count[order(low.return.industry.count$freq, decreasing = TRUE),],5)
+```

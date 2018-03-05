@@ -1,0 +1,109 @@
+---
+title: "Quant"
+author: "Wu Wei"
+date: "2018-1-25"
+output: html_document
+---
+
+
+
+## Library input
+```{r}
+rm(list = ls())
+
+suppressMessages(library(lubridate))
+suppressMessages(library(caret))
+suppressMessages(library(plyr))
+
+library(sca)
+library(forecast)
+
+```
+
+## Data Input
+
+```{r}
+
+
+monthly.industry.data <- read.csv("D:\\MyR\\quantprog\\Acollectdata\\monthly.industry.data.csv", 
+                                  stringsAsFactors = FALSE)
+
+standardlized.monthly.holder.sumpcttop5 <- read.csv(
+        "D:\\MyR\\quantprog\\Bstandardlizefactor\\standardlized.monthly.holder.sumpcttop5.csv", 
+        stringsAsFactors = FALSE)
+
+standardlized.monthly.pettm.data <- read.csv(
+        "D:\\MyR\\quantprog\\Bstandardlizefactor\\standardlized.monthly.pettm.data.csv", 
+        stringsAsFactors = FALSE)
+
+standardlized.monthly.tech.turnoverrate60 <- read.csv(
+        "D:\\MyR\\quantprog\\Bstandardlizefactor\\standardlized.monthly.tech.turnoverrate60.csv", 
+        stringsAsFactors = FALSE)
+
+```
+
+```{r}
+monthly.industry.data <- monthly.industry.data[,-1]
+
+# row.names(monthly.price.data) <- monthly.price.data[,1]
+# monthly.price.data <- monthly.price.data[,-1]
+# 
+# monthly.price.data <- as.matrix(monthly.price.data)
+```
+
+```{r}
+load("D:\\MyR\\quantprog\\Fbarramodelling\\result.F.hat.g")
+
+load("D:\\MyR\\quantprog\\Fbarramodelling\\Dinv.hat")
+```
+
+
+
+## Data Processing
+
+```{r}
+t.result.F.hat.g <- t(result.F.hat.g)
+
+factor.forecast <- apply(t.result.F.hat.g, 2, function(x) {
+        forecast(auto.arima(x), h = 3)$mean
+})
+
+
+# plot(t.result.F.hat.g[,3],type = "l")
+# 
+# auto.arima(t.result.F.hat.g[,3])
+```
+
+
+
+```{r}
+
+last.col <- ncol(monthly.industry.data)
+
+mainEffects <- dummyVars(as.formula(paste0(" ~ ", colnames(monthly.industry.data)[last.col])),
+                         data = monthly.industry.data[,c(1,last.col)])
+
+ind.dum <- predict(mainEffects, monthly.industry.data[,c(1, last.col)])
+
+ind.dum <- cbind(ind.dum,
+                 abcdefgh.holder.sumpcttop5 = standardlized.monthly.holder.sumpcttop5[,last.col],
+                 abcdefgh.pettm = standardlized.monthly.pettm.data[,last.col],
+                 abcdefgh.turnoverrate60 = standardlized.monthly.tech.turnoverrate60[,last.col])
+
+stock.return.forecast <- ind.dum %*% t(factor.forecast)
+
+
+```
+
+```{r}
+row.names(stock.return.forecast) <- monthly.industry.data$code
+```
+
+```{r}
+three.month.return.forecast <- apply(stock.return.forecast, 1, sum)
+
+ordered.three.month.return.forecast <- three.month.return.forecast[order(three.month.return.forecast, decreasing = TRUE)]
+```
+
+
+
