@@ -1,0 +1,277 @@
+---
+title: "7 factors"
+author: "Wu Wei"
+date: "2018-1-25"
+output: html_document
+---
+
+
+
+## Library input
+```{r}
+rm(list = ls())
+
+suppressMessages(library(lubridate))
+suppressMessages(library(caret))
+suppressMessages(library(plyr))
+
+library(sca)
+library(forecast)
+
+```
+
+## Data Input
+
+```{r}
+
+
+standardlized.monthly.price <- 
+        read.csv("D:\\MyR\\quantprog\\forAstockbefore20150930\\Bstandardlizefactor\\standardlized.monthly.price.csv", 
+                                                      stringsAsFactors = FALSE)
+
+
+monthly.industry.data <- 
+        read.csv("D:\\MyR\\quantprog\\forAstockbefore20150930\\BAcleandataforNAindustry\\processed.monthly.industry.data.csv", 
+                                  stringsAsFactors = FALSE)
+
+standardlized.monthly.epttm.data <- 
+        read.csv(
+        "D:\\MyR\\quantprog\\forAstockbefore20150930\\Bstandardlizefactor\\standardlized.monthly.epttm.data.csv", 
+        stringsAsFactors = FALSE)
+
+standardlized.monthly.tech.turnoverrate60 <- 
+        read.csv(
+        "D:\\MyR\\quantprog\\forAstockbefore20150930\\Bstandardlizefactor\\standardlized.monthly.tech.turnoverrate60.csv", 
+        stringsAsFactors = FALSE)
+
+standardlized.monthly.deductprofit.simple.rate <- 
+        read.csv(
+        "D:\\MyR\\quantprog\\forAstockbefore20150930\\Bstandardlizefactor\\standardlized.monthly.deductprofit.simple.rate.csv", 
+        stringsAsFactors = FALSE)
+
+standardlized.monthly.momentum.12month <- 
+        read.csv(
+        "D:\\MyR\\quantprog\\forAstockbefore20150930\\Bstandardlizefactor\\standardlized.monthly.momentum.12month.csv", 
+        stringsAsFactors = FALSE)
+
+standardlized.monthly.momentum.3month <- 
+        read.csv(
+        "D:\\MyR\\quantprog\\forAstockbefore20150930\\Bstandardlizefactor\\standardlized.monthly.momentum.3month.csv", 
+        stringsAsFactors = FALSE)
+
+
+standardlized.monthly.val.lnmv <- 
+        read.csv(
+        "D:\\MyR\\quantprog\\forAstockbefore20150930\\Bstandardlizefactor\\standardlized.monthly.val.lnmv.csv", 
+        stringsAsFactors = FALSE)
+
+standardlized.monthly.roe.data <- 
+        read.csv(
+        "D:\\MyR\\quantprog\\forAstockbefore20150930\\Bstandardlizefactor\\standardlized.monthly.roe.data.csv", 
+        stringsAsFactors = FALSE)
+
+```
+
+
+```{r}
+row.names(standardlized.monthly.price) <- standardlized.monthly.price[,1]
+standardlized.monthly.price <- standardlized.monthly.price[,-1]
+
+standardlized.monthly.price <- as.matrix(standardlized.monthly.price)
+```
+
+
+
+## Data Processing
+
+```{r}
+rtn <- standardlized.monthly.price
+```
+
+```{r}
+comparison.period <- 20
+
+
+### let the starting point to be same in different forecast.period
+training.set.endpoint <- nrow(rtn) - comparison.period - 4
+```
+
+
+```{r}
+
+for(i in 1:training.set.endpoint){
+
+# for(i in 91:91){
+
+        
+        mainEffects <- dummyVars(as.formula(paste0(" ~ ", colnames(monthly.industry.data)[i + 1])),
+                                 data = monthly.industry.data[,c(1,(i + 1))])
+
+        ind.dum <- predict(mainEffects, monthly.industry.data[,c(1, (i + 1))])
+
+        ind.dum <- cbind(ind.dum,
+                         abcdefgh.epttm = standardlized.monthly.epttm.data[,(i + 1)],
+                         abcdefgh.turnoverrate60 = standardlized.monthly.tech.turnoverrate60[,(i + 1)],
+                         abcdefgh.deductprofit.simple.rate = standardlized.monthly.deductprofit.simple.rate[,(i + 1)],
+                         abcdefgh.momentum.12month = standardlized.monthly.momentum.12month[,(i + 1)],
+                         abcdefgh.momentum.3month = standardlized.monthly.momentum.3month[,(i + 1)],
+                        
+                         abcdefgh.val.lnmv = standardlized.monthly.val.lnmv[,(i + 1)],
+                         abcdefgh.roe = standardlized.monthly.roe.data[,(i + 1)]
+                         )
+        
+        F.hat.o <- solve(crossprod(ind.dum)) %*% t(ind.dum) %*% t(rtn)[,i]
+
+        E.hat.o <- t(rtn)[,i] - ind.dum %*% F.hat.o
+        
+        if(i == 1){
+                result.F.hat.o <- F.hat.o
+                result.E.hat.o <- E.hat.o
+                
+        }else{
+                if((dim(result.F.hat.o)[1] - length(F.hat.o)) == 1) {
+                        F.hat.o <- c(0, F.hat.o)
+                }
+                result.F.hat.o <- cbind(result.F.hat.o, F.hat.o)
+                result.E.hat.o <- cbind(result.E.hat.o, E.hat.o)
+        }
+}
+
+```
+
+```{r}
+current.row.names <- row.names(result.F.hat.o)
+row.names(result.F.hat.o) <- substr(current.row.names, 10, nchar(current.row.names))
+
+colnames(result.F.hat.o) <- colnames(t(rtn))[1:training.set.endpoint]
+
+
+```
+
+```{r}
+result.E.hat.o[result.E.hat.o == 0] <- NA
+
+diagD.hat.o <- apply(result.E.hat.o,1,var,na.rm = TRUE)
+
+md.diagD.hat.o <- median(diagD.hat.o, na.rm = TRUE)
+
+diagD.hat.o[is.na(diagD.hat.o)] <- md.diagD.hat.o
+
+
+```
+
+```{r}
+reciprocal.diagD.hat.o <- diagD.hat.o^(-1)
+```
+
+
+```{r}
+                
+median.value <- median(reciprocal.diagD.hat.o, na.rm = TRUE)
+md.sd <- median(abs(reciprocal.diagD.hat.o - median.value), na.rm = TRUE)
+
+# browser()
+
+if(md.sd == 0){
+        md.sd <- sd(reciprocal.diagD.hat.o)
+}
+
+uplimit <- median.value + 5 * md.sd
+lowlimit <- median.value - 5 * md.sd
+reciprocal.diagD.hat.o[reciprocal.diagD.hat.o > uplimit] <- uplimit
+reciprocal.diagD.hat.o[reciprocal.diagD.hat.o < lowlimit] <- lowlimit
+```
+
+
+```{r}
+
+Dinv.hat <- diag(reciprocal.diagD.hat.o)
+
+```
+
+
+
+
+```{r}
+save(Dinv.hat, file = "comparison.Dinv.hat")
+```
+
+```{r}
+# load(file = "comparison.Dinv.hat")
+```
+
+
+```{r}
+
+# for(i in 1:(training.set.endpoint + comparison.period)){
+
+# for(i in 1:2){
+
+for(i in 1:training.set.endpoint){
+        
+        mainEffects <- dummyVars(as.formula(paste0(" ~ ", colnames(monthly.industry.data)[i + 1])),
+                                 data = monthly.industry.data[,c(1,(i + 1))])
+
+        ind.dum <- predict(mainEffects, monthly.industry.data[,c(1, (i + 1))])
+
+        ind.dum <- cbind(ind.dum,
+                         abcdefgh.epttm = standardlized.monthly.epttm.data[,(i + 1)],
+                         abcdefgh.turnoverrate60 = standardlized.monthly.tech.turnoverrate60[,(i + 1)],
+                         abcdefgh.deductprofit.simple.rate = standardlized.monthly.deductprofit.simple.rate[,(i + 1)],
+                         abcdefgh.momentum.12month = standardlized.monthly.momentum.12month[,(i + 1)],
+                         abcdefgh.momentum.3month = standardlized.monthly.momentum.3month[,(i + 1)],
+                        
+                         abcdefgh.val.lnmv = standardlized.monthly.val.lnmv[,(i + 1)],
+                         abcdefgh.roe = standardlized.monthly.roe.data[,(i + 1)]
+                         )
+        
+        
+        Hmtx <- solve(t(ind.dum) %*% Dinv.hat %*% ind.dum) %*% t(ind.dum) %*% Dinv.hat
+                
+        F.hat.g <- Hmtx %*%  t(rtn)[,i]
+
+        E.hat.g <- t(rtn)[,i] - ind.dum %*% F.hat.g
+
+        if(i == 1){
+                result.F.hat.g <- F.hat.g
+                result.E.hat.g <- E.hat.g
+        }else{
+                if((dim(result.F.hat.g)[1] - length(F.hat.g)) == 1) {
+                        F.hat.g <- c(0, F.hat.g)
+                }
+
+                result.F.hat.g <- cbind(result.F.hat.g, F.hat.g)
+                result.E.hat.g <- cbind(result.E.hat.g, E.hat.g)
+        }
+}
+
+
+```
+
+
+
+```{r}
+current.row.names <- row.names(result.F.hat.g)
+row.names(result.F.hat.g) <- substr(current.row.names, 10, nchar(current.row.names))
+
+# colnames(result.F.hat.g) <- colnames(t(rtn))[1:(training.set.endpoint + comparison.period)]
+
+colnames(result.F.hat.g) <- colnames(t(rtn))[1:training.set.endpoint]
+
+```
+
+```{r}
+save(result.F.hat.g, file = "comparison.F.hat.g")
+```
+
+```{r}
+row.names(result.E.hat.g) <- monthly.industry.data$code
+
+colnames(result.E.hat.g) <- colnames(t(rtn))[1:training.set.endpoint]
+
+```
+
+```{r}
+save(result.E.hat.g, file = "comparison.E.hat.g")
+```
+

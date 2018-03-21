@@ -1,0 +1,92 @@
+---
+title: "Quant"
+author: "Wu Wei"
+date: "2018-1-25"
+output: html_document
+---
+
+
+
+## Library input
+```{r}
+rm(list = ls())
+
+suppressMessages(library(lubridate))
+suppressMessages(library(caret))
+suppressMessages(library(plyr))
+
+library(sca)
+library(forecast)
+
+```
+
+## Data Input
+
+```{r}
+
+monthly.price.data <- read.csv("D:\\MyR\\quantprog\\forallAstock\\Acollectdata\\monthly.price.data.csv",
+                               stringsAsFactors = FALSE)
+
+hushen300.price <- read.csv("D:\\MyR\\quantprog\\forallAstock\\Acollectdata\\hushen300.monthly.price.csv",
+                               stringsAsFactors = FALSE)
+
+
+```
+
+
+```{r}
+load("result.investion.target")
+load("result.investion.target.name")
+```
+
+```{r}
+write.csv(result.investion.target.name,file = "result.investion.name.csv")
+```
+
+
+## Data Processing
+
+```{r}
+comparison.period <- 20
+forecast.period <- 2
+
+```
+
+```{r}
+selected.stocks.actual.return <- numeric(comparison.period)
+hushen300.return <- numeric(comparison.period)
+
+for(i in 1:comparison.period){
+
+# for(i in 1:1){
+
+        date.name <- colnames(result.investion.target)[i]        
+        index <- which(monthly.price.data[,1] == date.name)
+        
+        selected.stocks.actual.return[i] <- sum(mean(unlist(monthly.price.data[(index + (1:forecast.period)),
+                                           colnames(monthly.price.data) %in% paste0("X",result.investion.target[,i])])))
+
+        hushen300.return[i] <- sum(hushen300.price[(index + (1:forecast.period)), 2])
+}
+
+```
+
+```{r}
+names(selected.stocks.actual.return) <- colnames(result.investion.target)
+names(hushen300.return) <- colnames(result.investion.target)
+```
+
+```{r}
+mean(selected.stocks.actual.return > hushen300.return)
+```
+
+```{r}
+sum(selected.stocks.actual.return)
+sum(hushen300.return)
+```
+
+```{r}
+options(width = 103)
+print(round(selected.stocks.actual.return,digits = 4))
+print(round(hushen300.return,digits = 4))
+```

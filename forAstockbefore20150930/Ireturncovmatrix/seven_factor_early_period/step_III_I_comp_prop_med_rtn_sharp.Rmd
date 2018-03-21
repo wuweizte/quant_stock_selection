@@ -1,0 +1,254 @@
+---
+title: "7 factors"
+author: "Wu Wei"
+date: "2018-1-25"
+output: html_document
+---
+
+
+
+## Library input
+```{r}
+rm(list = ls())
+
+suppressMessages(library(lubridate))
+suppressMessages(library(caret))
+suppressMessages(library(plyr))
+
+library(sca)
+library(forecast)
+library(Rdonlp2)
+
+```
+
+## Data Input
+```{r}
+standardlized.monthly.price <- 
+        read.csv("D:\\MyR\\quantprog\\forAstockbefore20150930\\Bstandardlizefactor\\standardlized.monthly.price.csv", 
+                                                      stringsAsFactors = FALSE)
+
+hushen300.price <- read.csv("D:\\MyR\\quantprog\\forallAstock\\Acollectdata\\hushen300.monthly.price.csv",
+                               stringsAsFactors = FALSE)
+
+original.price.data <- 
+        read.csv("D:\\MyR\\quantprog\\forallAstock\\Acollectdata\\originaldata\\original.price.data.csv", 
+                                      stringsAsFactors = FALSE)
+
+
+load("D:\\MyR\\quantprog\\forAstockbefore20150930\\BAcleandataforNAindustry\\stockcode")
+load(file = "stock.cov.matrix")
+
+load("D:\\MyR\\quantprog\\forallAstock\\Acollectdata\\stock.code.name")
+
+```
+
+```{r}
+row.names(original.price.data) <- original.price.data$X
+
+original.price.data <- original.price.data[,-1]
+
+
+original.price.data <- 
+        original.price.data[row.names(original.price.data) %in% stockcode,]
+
+```
+
+
+
+## Data Processing
+```{r}
+rtn <- standardlized.monthly.price
+```
+
+```{r}
+comparison.period <- 20
+
+
+training.set.endpoint <- nrow(rtn) - comparison.period - 4
+```
+
+```{r}
+##### used for computation
+target.var <- var(head(hushen300.price$V1,training.set.endpoint))
+target.return <- mean(hushen300.price$V1)
+```
+
+```{r}
+##### used for computation
+vector.length <- dim(stock.cov.matrix)[1]
+```
+
+
+```{r}
+monthly.price.data <- t(original.price.data)
+
+monthly.price.data <- diff(log(monthly.price.data))
+
+
+```
+
+```{r}
+monthly.price.data <- monthly.price.data[-c(1:12),]
+```
+
+
+```{r}
+##### used for stock selection
+
+stock.return <- apply(monthly.price.data[1:training.set.endpoint, ], 2, median,na.rm = TRUE)
+
+```
+
+
+## Proportion computation
+
+### 1st computation
+
+```{r}
+stock.limited <- names(head(stock.return[order(stock.return, decreasing = TRUE)], 200))
+
+vector.length <- length(stock.limited)
+
+stock.cov.matrix.limited <- stock.cov.matrix[row.names(stock.cov.matrix) %in% stock.limited,
+                                     colnames(stock.cov.matrix) %in% stock.limited]
+
+stock.return.limited <- stock.return[names(stock.return) %in% stock.limited]
+```
+
+
+```{r}
+p <- rep(1/vector.length, vector.length)
+
+par.l <- rep(0,    vector.length)
+par.u <- rep(0.1, vector.length)
+
+fn <- function(x){
+        rbind(x) %*% stock.cov.matrix.limited %*% cbind(x)
+}
+
+A <- matrix(rep(1, vector.length), 1, byrow = TRUE)
+
+lin.l <- 1
+lin.u <- 1
+
+nlcon <- function(x){
+        # browser()
+        rbind(x) %*% cbind(stock.return.limited)
+}
+
+nlin.l <- 0.02
+nlin.u <- +Inf
+```
+
+
+```{r}
+system.time(
+        
+        result.1st <- donlp2(p,
+                         fn,
+                         par.u = par.u,
+                         par.l = par.l,
+                         A,
+                         lin.lower = lin.l,
+                         lin.upper = lin.u,
+                         nlin = list(nlcon),
+                         nlin.upper = nlin.u,
+                         nlin.lower = nlin.l)        
+)
+
+```
+
+```{r}
+result.1st$fx < target.var
+
+prop.limit <- 1e-2
+sum(result.1st$par > prop.limit)
+sum(result.1st$par[result.1st$par > prop.limit])
+
+stock.code <- names(stock.return.limited[result.1st$par > prop.limit ])
+
+stock.name <- stock.code.name[substr(stock.code.name,1,9) %in% stock.code]
+
+data.frame(code = stock.code, 
+           initial.prop = round(result.1st$par[result.1st$par > prop.limit ] * 100, digits = 2),
+           name = stock.name) 
+```
+
+### 2nd computation
+
+```{r}
+stock.limited <- names(stock.return.limited[result.1st$par > prop.limit ])
+
+vector.length <- length(stock.limited)
+
+stock.cov.matrix.limited <- stock.cov.matrix[row.names(stock.cov.matrix) %in% stock.limited,
+                                     colnames(stock.cov.matrix) %in% stock.limited]
+
+stock.return.limited <- stock.return[names(stock.return) %in% stock.limited]
+```
+
+
+```{r}
+p <- rep(1/vector.length, vector.length)
+
+par.l <- rep(0,    vector.length)
+par.u <- rep(0.1, vector.length)
+
+fn <- function(x){
+        rbind(x) %*% stock.cov.matrix.limited %*% cbind(x)
+}
+
+A <- matrix(rep(1, vector.length), 1, byrow = TRUE)
+
+lin.l <- 1
+lin.u <- 1
+
+nlcon <- function(x){
+        # browser()
+        rbind(x) %*% cbind(stock.return.limited)
+}
+
+nlin.l <- target.return + 0.002
+nlin.u <- +Inf
+```
+
+
+```{r}
+system.time(
+        
+        result.2nd <- donlp2(p,
+                         fn,
+                         par.u = par.u,
+                         par.l = par.l,
+                         A,
+                         lin.lower = lin.l,
+                         lin.upper = lin.u,
+                         nlin = list(nlcon),
+                         nlin.upper = nlin.u,
+                         nlin.lower = nlin.l)        
+)
+
+```
+
+```{r}
+result.2nd$fx < target.var
+
+prop.limit <- 1e-2
+sum(result.2nd$par > prop.limit)
+sum(result.2nd$par[result.2nd$par > prop.limit])
+
+com.prop <- data.frame(code = names(stock.return.limited[result.2nd$par > prop.limit ]), 
+                       prop = round(result.2nd$par[result.2nd$par > prop.limit ] * 100, digits = 2),
+                       name = stock.name) 
+
+print(com.prop)
+```
+
+
+```{r}
+save(com.prop, file = "com.prop")
+```
+
+
+
+

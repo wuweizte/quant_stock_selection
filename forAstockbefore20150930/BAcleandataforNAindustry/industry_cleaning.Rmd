@@ -1,0 +1,60 @@
+---
+title: "Quant"
+author: "Wu Wei"
+date: "2018-1-25"
+output: html_document
+---
+
+
+
+## Library input
+```{r}
+rm(list = ls())
+
+suppressMessages(library(lubridate))
+suppressMessages(library(caret))
+suppressMessages(library(plyr))
+
+library(sca)
+
+```
+
+## Data Input
+
+```{r}
+
+monthly.industry.data <- 
+        read.csv("D:\\MyR\\quantprog\\forallAstock\\Acollectdata\\monthly.industry.data.csv", 
+                                  stringsAsFactors = FALSE)
+
+```
+
+```{r}
+load("D:\\MyR\\quantprog\\forAstockbefore20150930\\BAcleandataforNAindustry\\stockcode")
+```
+
+
+## Data Processing
+
+
+```{r}
+monthly.industry.data <- monthly.industry.data[,-1]
+
+```
+
+```{r}
+monthly.industry.data <- monthly.industry.data[monthly.industry.data$code %in% stockcode,]
+
+```
+
+
+
+```{r}
+
+write.csv(monthly.industry.data, 
+          "processed.monthly.industry.data.csv",
+          row.names = FALSE)
+
+
+```
+

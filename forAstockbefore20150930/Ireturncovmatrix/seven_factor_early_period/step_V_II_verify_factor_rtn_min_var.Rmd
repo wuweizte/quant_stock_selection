@@ -1,0 +1,86 @@
+---
+title: "Quant"
+author: "Wu Wei"
+date: "2018-1-25"
+output: html_document
+---
+
+
+
+## Library input
+```{r}
+rm(list = ls())
+
+suppressMessages(library(lubridate))
+suppressMessages(library(caret))
+suppressMessages(library(plyr))
+
+library(sca)
+library(forecast)
+
+```
+
+## Data Input
+
+```{r}
+
+monthly.price.data <- read.csv("D:\\MyR\\quantprog\\forallAstock\\Acollectdata\\monthly.price.data.csv",
+                               stringsAsFactors = FALSE)
+
+hushen300.price <- read.csv("D:\\MyR\\quantprog\\forallAstock\\Acollectdata\\hushen300.monthly.price.csv",
+                               stringsAsFactors = FALSE)
+
+
+```
+
+
+```{r}
+load("step.V.I.com.prop")
+```
+
+
+
+## Data Processing
+
+```{r}
+comparison.period <- 20
+
+
+### let the starting point to be same in different forecast.period
+training.set.endpoint <- nrow(monthly.price.data) - comparison.period - 4
+
+
+```
+
+
+
+```{r}
+
+
+selected.stocks.actual.return <- as.matrix(monthly.price.data[(training.set.endpoint + (1:12)),
+                                                              colnames(monthly.price.data) %in% paste0("X",com.prop$code)])  %*% 
+        cbind(com.prop$prop/100)
+
+
+
+
+hushen300.return <- hushen300.price[(training.set.endpoint + (1:12)), 2]
+```
+
+```{r}
+mean(selected.stocks.actual.return)
+mean(hushen300.return)
+```
+
+
+```{r}
+sd(selected.stocks.actual.return)
+sd(hushen300.return)
+```
+
+
+```{r}
+data.frame(selected.stocks = round(selected.stocks.actual.return * 100,digits = 2), 
+           hushen300 = round(hushen300.return * 100,digits = 2))
+```
+

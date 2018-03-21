@@ -1,0 +1,114 @@
+---
+title: "Quant"
+author: "Wu Wei"
+date: "2018-1-25"
+output: html_document
+---
+
+
+
+## Library input
+```{r}
+rm(list = ls())
+
+suppressMessages(library(lubridate))
+suppressMessages(library(caret))
+suppressMessages(library(plyr))
+
+library(sca)
+
+```
+
+## Data Input
+
+```{r}
+monthly.val.lnmv <- 
+        read.csv("D:\\MyR\\quantprog\\forallAstock\\Acollectdata\\monthly.val.lnmv.csv", 
+                                      stringsAsFactors = FALSE)
+
+
+```
+
+
+```{r}
+load("D:\\MyR\\quantprog\\forAstockbefore20150930\\BAcleandataforNAindustry\\stockcode")
+```
+
+
+
+## Data Processing
+
+```{r}
+
+processed.monthly.val.lnmv <- monthly.val.lnmv[,-1]
+
+row.names(processed.monthly.val.lnmv) <- monthly.val.lnmv[,1]
+
+####delete the data of 2018-1
+
+processed.monthly.val.lnmv <- processed.monthly.val.lnmv[,-ncol(processed.monthly.val.lnmv)]
+
+```
+
+```{r}
+processed.monthly.val.lnmv <- 
+        processed.monthly.val.lnmv[row.names(processed.monthly.val.lnmv) %in% stockcode,]
+
+```
+
+
+
+```{r}
+
+delimitvalue.monthly.val.lnmv <- apply(processed.monthly.val.lnmv,2, function(x) {
+        median.value <- median(x, na.rm = TRUE)
+        md.sd <- median(abs(x - median.value), na.rm = TRUE)
+
+        # browser()
+        uplimit <- median.value + 3 * md.sd
+        lowlimit <- median.value - 3 * md.sd
+        x[x > uplimit] <- uplimit
+        x[x < lowlimit] <- lowlimit
+        return(x)
+})
+
+```
+
+
+```{r}
+### 两次去极值
+
+delimitvalue.monthly.val.lnmv <- apply(delimitvalue.monthly.val.lnmv, 2, function(x) {
+        median.value <- median(x, na.rm = TRUE)
+        md.sd <- median(abs(x - median.value), na.rm = TRUE)
+
+        # browser()
+        uplimit <- median.value + 3 * md.sd
+        lowlimit <- median.value - 3 * md.sd
+        x[x > uplimit] <- uplimit
+        x[x < lowlimit] <- lowlimit
+        return(x)
+})
+
+```
+
+
+
+```{r}
+preProcValues <- preProcess(delimitvalue.monthly.val.lnmv, method = c("center","scale"))
+
+standardlized.monthly.val.lnmv <- predict(preProcValues, delimitvalue.monthly.val.lnmv)
+
+standardlized.monthly.val.lnmv[is.na(standardlized.monthly.val.lnmv)] <- 0
+```
+
+
+
+```{r}
+
+write.csv(standardlized.monthly.val.lnmv, 
+          "standardlized.monthly.val.lnmv.csv")
+
+
+```
+

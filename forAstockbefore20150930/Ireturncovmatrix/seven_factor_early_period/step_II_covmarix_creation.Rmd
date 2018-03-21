@@ -1,0 +1,214 @@
+---
+title: "7 factors"
+author: "Wu Wei"
+date: "2018-1-25"
+output: html_document
+---
+
+
+
+## Library input
+```{r}
+rm(list = ls())
+
+suppressMessages(library(lubridate))
+suppressMessages(library(caret))
+suppressMessages(library(plyr))
+
+library(sca)
+library(forecast)
+
+```
+
+## Data Input
+
+```{r}
+
+
+standardlized.monthly.price <- 
+        read.csv("D:\\MyR\\quantprog\\forAstockbefore20150930\\Bstandardlizefactor\\standardlized.monthly.price.csv", 
+                                                      stringsAsFactors = FALSE)
+
+
+monthly.industry.data <- 
+        read.csv("D:\\MyR\\quantprog\\forAstockbefore20150930\\BAcleandataforNAindustry\\processed.monthly.industry.data.csv", 
+                                  stringsAsFactors = FALSE)
+
+standardlized.monthly.epttm.data <- 
+        read.csv(
+        "D:\\MyR\\quantprog\\forAstockbefore20150930\\Bstandardlizefactor\\standardlized.monthly.epttm.data.csv", 
+        stringsAsFactors = FALSE)
+
+standardlized.monthly.tech.turnoverrate60 <- 
+        read.csv(
+        "D:\\MyR\\quantprog\\forAstockbefore20150930\\Bstandardlizefactor\\standardlized.monthly.tech.turnoverrate60.csv", 
+        stringsAsFactors = FALSE)
+
+standardlized.monthly.deductprofit.simple.rate <- 
+        read.csv(
+        "D:\\MyR\\quantprog\\forAstockbefore20150930\\Bstandardlizefactor\\standardlized.monthly.deductprofit.simple.rate.csv", 
+        stringsAsFactors = FALSE)
+
+standardlized.monthly.momentum.12month <- 
+        read.csv(
+        "D:\\MyR\\quantprog\\forAstockbefore20150930\\Bstandardlizefactor\\standardlized.monthly.momentum.12month.csv", 
+        stringsAsFactors = FALSE)
+
+standardlized.monthly.momentum.3month <- 
+        read.csv(
+        "D:\\MyR\\quantprog\\forAstockbefore20150930\\Bstandardlizefactor\\standardlized.monthly.momentum.3month.csv", 
+        stringsAsFactors = FALSE)
+
+
+standardlized.monthly.val.lnmv <- 
+        read.csv(
+        "D:\\MyR\\quantprog\\forAstockbefore20150930\\Bstandardlizefactor\\standardlized.monthly.val.lnmv.csv", 
+        stringsAsFactors = FALSE)
+
+standardlized.monthly.roe.data <- 
+        read.csv(
+        "D:\\MyR\\quantprog\\forAstockbefore20150930\\Bstandardlizefactor\\standardlized.monthly.roe.data.csv", 
+        stringsAsFactors = FALSE)
+
+```
+
+
+```{r}
+row.names(standardlized.monthly.price) <- standardlized.monthly.price[,1]
+standardlized.monthly.price <- standardlized.monthly.price[,-1]
+
+standardlized.monthly.price <- as.matrix(standardlized.monthly.price)
+```
+
+```{r}
+load(file = "comparison.F.hat.g")
+```
+
+
+```{r}
+load(file = "comparison.E.hat.g")
+```
+
+
+
+## Data Processing
+
+```{r}
+diagD.hat.g <- apply(result.E.hat.g, 1, var)
+```
+
+```{r}
+cov.f.matrix <- cov(t(result.F.hat.g)) 
+```
+
+```{r}
+cov.f.matrix <- cov.f.matrix[-1,-1] 
+```
+
+
+```{r}
+rtn <- standardlized.monthly.price
+```
+
+```{r}
+comparison.period <- 20
+
+
+### let the starting point to be same in different forecast.period
+training.set.endpoint <- nrow(rtn) - comparison.period - 4
+```
+
+```{r}
+
+i <- training.set.endpoint + 1
+
+
+mainEffects <- dummyVars(as.formula(paste0(" ~ ", colnames(monthly.industry.data)[i + 1])),
+                         data = monthly.industry.data[,c(1,(i + 1))])
+
+ind.dum <- predict(mainEffects, monthly.industry.data[,c(1, (i + 1))])
+
+ind.dum <- cbind(ind.dum,
+                 abcdefgh.epttm = standardlized.monthly.epttm.data[,(i + 1)],
+                 abcdefgh.turnoverrate60 = standardlized.monthly.tech.turnoverrate60[,(i + 1)],
+                 abcdefgh.deductprofit.simple.rate = standardlized.monthly.deductprofit.simple.rate[,(i + 1)],
+                 abcdefgh.momentum.12month = standardlized.monthly.momentum.12month[,(i + 1)],
+                 abcdefgh.momentum.3month = standardlized.monthly.momentum.3month[,(i + 1)],
+                 
+                 abcdefgh.val.lnmv = standardlized.monthly.val.lnmv[,(i + 1)],
+                 abcdefgh.roe = standardlized.monthly.roe.data[,(i + 1)]
+)
+
+
+```
+
+
+```{r}
+stock.cov.matrix <- ind.dum %*% cov.f.matrix %*% t(ind.dum) + diag(diagD.hat.g)
+```
+
+```{r}
+row.names(stock.cov.matrix) <- monthly.industry.data$code
+colnames(stock.cov.matrix) <- monthly.industry.data$code 
+```
+
+```{r}
+save(stock.cov.matrix, file = "stock.cov.matrix")
+```
+
+## Verification
+
+
+```{r}
+load(file = "stock.cov.matrix")
+```
+
+
+```{r}
+original.price.data <- 
+        read.csv("D:\\MyR\\quantprog\\forallAstock\\Acollectdata\\originaldata\\original.price.data.csv", 
+                                      stringsAsFactors = FALSE)
+
+
+```
+
+
+```{r}
+load("D:\\MyR\\quantprog\\forAstockbefore20150930\\BAcleandataforNAindustry\\stockcode")
+```
+
+```{r}
+row.names(original.price.data) <- original.price.data$X
+
+original.price.data <- original.price.data[,-1]
+
+
+```
+
+```{r}
+original.price.data <- 
+        original.price.data[row.names(original.price.data) %in% stockcode,]
+
+```
+
+```{r}
+monthly.price.data <- t(original.price.data)
+
+monthly.price.data <- diff(log(monthly.price.data))
+
+
+```
+
+```{r}
+monthly.price.data <- monthly.price.data[-c(1:12),]
+```
+
+```{r}
+View(cov(monthly.price.data[1:training.set.endpoint, 1:10]))
+
+```
+
+```{r}
+View(stock.cov.matrix[1:10,1:10])
+```
+

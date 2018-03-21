@@ -1,0 +1,235 @@
+---
+title: "Quant"
+author: "Wu Wei"
+date: "2018-1-25"
+output: html_document
+---
+
+
+
+## Library input
+```{r}
+rm(list = ls())
+
+suppressMessages(library(lubridate))
+suppressMessages(library(caret))
+suppressMessages(library(plyr))
+
+library(sca)
+library(forecast)
+
+```
+
+## Data Input
+
+```{r}
+
+monthly.industry.data <- 
+        read.csv("D:\\MyR\\quantprog\\forAstockbefore20150930\\BAcleandataforNAindustry\\processed.monthly.industry.data.csv", 
+                                  stringsAsFactors = FALSE)
+
+standardlized.monthly.epttm.data <- 
+        read.csv(
+        "D:\\MyR\\quantprog\\forAstockbefore20150930\\Bstandardlizefactor\\standardlized.monthly.epttm.data.csv", 
+        stringsAsFactors = FALSE)
+
+standardlized.monthly.tech.turnoverrate60 <- 
+        read.csv(
+        "D:\\MyR\\quantprog\\forAstockbefore20150930\\Bstandardlizefactor\\standardlized.monthly.tech.turnoverrate60.csv", 
+        stringsAsFactors = FALSE)
+
+standardlized.monthly.deductprofit.simple.rate <- 
+        read.csv(
+        "D:\\MyR\\quantprog\\forAstockbefore20150930\\Bstandardlizefactor\\standardlized.monthly.deductprofit.simple.rate.csv", 
+        stringsAsFactors = FALSE)
+
+standardlized.monthly.momentum.12month <- 
+        read.csv(
+        "D:\\MyR\\quantprog\\forAstockbefore20150930\\Bstandardlizefactor\\standardlized.monthly.momentum.12month.csv", 
+        stringsAsFactors = FALSE)
+
+standardlized.monthly.momentum.3month <- 
+        read.csv(
+        "D:\\MyR\\quantprog\\forAstockbefore20150930\\Bstandardlizefactor\\standardlized.monthly.momentum.3month.csv", 
+        stringsAsFactors = FALSE)
+
+
+standardlized.monthly.val.lnmv <- 
+        read.csv(
+        "D:\\MyR\\quantprog\\forAstockbefore20150930\\Bstandardlizefactor\\standardlized.monthly.val.lnmv.csv", 
+        stringsAsFactors = FALSE)
+
+standardlized.monthly.roe.data <- 
+        read.csv(
+        "D:\\MyR\\quantprog\\forAstockbefore20150930\\Bstandardlizefactor\\standardlized.monthly.roe.data.csv", 
+        stringsAsFactors = FALSE)
+
+```
+
+```{r}
+# monthly.industry.data <- monthly.industry.data[,-1]
+
+```
+
+```{r}
+load("comparison.F.hat.g")
+
+load("comparison.Dinv.hat")
+
+load("D:\\MyR\\quantprog\\forallAstock\\Acollectdata\\stock.code.name")
+```
+
+```{r}
+write.csv(result.F.hat.g,"result.F.csv")
+```
+
+
+
+## Data Processing
+
+```{r}
+t.result.F.hat.g <- t(result.F.hat.g)
+
+```
+
+```{r}
+comparison.period <- 20
+
+forecast.period <- 2
+
+training.set.endpoint <- nrow(t.result.F.hat.g) - comparison.period
+
+```
+
+
+```{r}
+
+for(i in 1:comparison.period){
+
+# for(i in 1:1){
+
+# for(i in comparison.period:comparison.period){
+
+        index <- training.set.endpoint + i
+                
+        factor.forecast <- rbind(apply(head(t.result.F.hat.g, index), 2, function(x) {
+                fit.arima <- auto.arima(x)
+                
+                if(sum(fit.arima$arma[c(1,6,2)]) == 0){
+                        result <- forecast(ets(x), h = forecast.period)$mean
+                        
+                }else{
+                         result <- forecast(fit.arima, h = forecast.period)$mean        
+                }
+                
+                return(result)
+        }))
+        
+        epttm <- factor.forecast[,"epttm"]
+        epttm[epttm < 0] <- 0
+        factor.forecast[,"epttm"] <- epttm
+
+        turnoverrate60 <- factor.forecast[,"turnoverrate60"]
+        turnoverrate60[turnoverrate60 > 0] <- 0
+        factor.forecast[,"turnoverrate60"] <- turnoverrate60
+
+        deductprofit.simple.rate <- factor.forecast[,"deductprofit.simple.rate"]
+        deductprofit.simple.rate[deductprofit.simple.rate < 0] <- 0
+        factor.forecast[,"deductprofit.simple.rate"] <- deductprofit.simple.rate
+
+        momentum.12month <- factor.forecast[,"momentum.12month"]
+        momentum.12month[momentum.12month > 0] <- 0
+        factor.forecast[,"momentum.12month"] <- momentum.12month
+
+        momentum.3month <- factor.forecast[,"momentum.3month"]
+        momentum.3month[momentum.3month > 0] <- 0
+        factor.forecast[,"momentum.3month"] <- momentum.3month
+
+        val.lnmv <- factor.forecast[,"val.lnmv"]
+        val.lnmv[val.lnmv > 0] <- 0
+        factor.forecast[,"val.lnmv"] <- val.lnmv
+        
+        roe <- factor.forecast[,"roe"]
+        roe[roe < 0] <- 0
+        factor.forecast[,"roe"] <- roe
+        
+        last.col <- index + 2
+        
+        mainEffects <- dummyVars(as.formula(paste0(" ~ ", colnames(monthly.industry.data)[last.col])),
+                                 data = monthly.industry.data[,c(1,last.col)])
+        
+        ind.dum <- predict(mainEffects, monthly.industry.data[,c(1, last.col)])
+        
+        ind.dum <- cbind(ind.dum,
+                         abcdefgh.epttm = standardlized.monthly.epttm.data[,last.col],
+                         abcdefgh.turnoverrate60 = standardlized.monthly.tech.turnoverrate60[,last.col],
+                         abcdefgh.deductprofit.simple.rate = standardlized.monthly.deductprofit.simple.rate[,last.col],
+                         abcdefgh.momentum.12month = standardlized.monthly.momentum.12month[,last.col],
+                         abcdefgh.momentum.3month = standardlized.monthly.momentum.3month[,last.col],
+                         
+                         abcdefgh.val.lnmv = standardlized.monthly.val.lnmv[,last.col],
+                         abcdefgh.roe = standardlized.monthly.roe.data[,last.col]
+                         )
+        
+        if(dim(ind.dum)[2] < dim(factor.forecast)[2]){
+                factor.forecast <- factor.forecast[,-1]
+        }
+        
+        stock.return.forecast <- ind.dum %*% t(factor.forecast)
+        
+        
+        row.names(stock.return.forecast) <- monthly.industry.data$code
+        return.forecast <- apply(stock.return.forecast, 1, sum)
+        
+        ordered.return.forecast <- 
+                head(return.forecast[order(return.forecast, decreasing = TRUE)],20)        
+
+        if(i == 1){
+                result.investion.target <- cbind(names(ordered.return.forecast))
+                result.investion.target.name <-
+                        cbind(head(stock.code.name[order(return.forecast, decreasing = TRUE)], 20))
+        }else{
+                result.investion.target <- cbind(result.investion.target, names(ordered.return.forecast))
+                result.investion.target.name <-
+                        cbind(result.investion.target.name,
+                                                      head(stock.code.name[order(return.forecast, decreasing = TRUE)],20))
+        }
+
+        ordered.return.forecast.200 <- 
+                head(return.forecast[order(return.forecast, decreasing = TRUE)],200)        
+        
+        if(i == 1){
+                result.investion.target.200 <- cbind(names(ordered.return.forecast.200))
+                result.investion.target.name.200 <-
+                        cbind(head(stock.code.name[order(return.forecast, decreasing = TRUE)], 200))
+        }else{
+                result.investion.target.200 <- cbind(result.investion.target.200, names(ordered.return.forecast.200))
+                result.investion.target.name.200 <-
+                        cbind(result.investion.target.name.200,
+                              head(stock.code.name[order(return.forecast, decreasing = TRUE)],200))
+        }
+        
+}
+
+```
+
+```{r}
+colnames(result.investion.target) <- row.names(t.result.F.hat.g)[training.set.endpoint + (1:comparison.period)]
+
+colnames(result.investion.target.name) <- colnames(result.investion.target) 
+
+colnames(result.investion.target.200) <- row.names(t.result.F.hat.g)[training.set.endpoint + (1:comparison.period)]
+
+colnames(result.investion.target.name.200) <- colnames(result.investion.target.200) 
+
+```
+
+```{r}
+save(result.investion.target, file = "result.investion.target")
+save(result.investion.target.name, file = "result.investion.target.name")
+
+save(result.investion.target.200, file = "result.investion.target.200")
+save(result.investion.target.name.200, file = "result.investion.target.name.200")
+
+```
+
