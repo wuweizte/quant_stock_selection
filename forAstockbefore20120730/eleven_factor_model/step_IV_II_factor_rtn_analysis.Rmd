@@ -1,0 +1,348 @@
+---
+title: "11 factors"
+author: "Wu Wei"
+date: "2018-5-16"
+output: html_document
+---
+
+## 0. Data Input
+
+```{r}
+rm(list = ls())
+
+load("comparison.F.hat.g")
+load("result.factor.forecast")
+
+load("result.factor.forecast.comparison.12month")
+```
+
+## 1. Mean & SD
+
+```{r}
+t.result.F.hat.g <- t(result.F.hat.g)
+
+```
+
+```{r}
+comparison.period <- 61
+
+forecast.period <- 1
+
+training.set.endpoint <- nrow(t.result.F.hat.g) - comparison.period
+
+```
+
+
+```{r}
+mean.abs.factor <- apply(abs(head(t.result.F.hat.g, training.set.endpoint)),  2, mean)
+
+mean.abs.factor[order(mean.abs.factor)]
+```
+
+```{r}
+mean.factor <- apply(head(t.result.F.hat.g, training.set.endpoint),  2, mean)
+
+mean.factor[order(abs(mean.factor))]
+```
+
+```{r}
+sd.factor <- apply(head(t.result.F.hat.g, training.set.endpoint),  2, sd)
+
+sd.factor[order(sd.factor)]
+```
+
+
+## 2. Comparison
+
+### 2.1 epttm
+
+```{r , fig.height=6, fig.width=12, echo=FALSE,eval=TRUE}
+epttm <- ts(result.F.hat.g["epttm",], start = c(2008, 1), frequency = 12)
+
+epttm.forecast <- ts(result.factor.forecast["epttm",], start = c(2013, 1), frequency = 12)
+
+plot(epttm,type = "l", main = "epttm")
+
+abline(h = 0, col = "red")
+abline(v = 2017, col = "red")
+
+lines(epttm.forecast, col = "blue")
+```
+
+### 2.2 turnoverrate60
+
+```{r , fig.height=6, fig.width=12, echo=FALSE,eval=TRUE}
+turnoverrate60 <- ts(result.F.hat.g["turnoverrate60",], start = c(2008, 1), frequency = 12)
+
+turnoverrate60.forecast <- ts(result.factor.forecast["turnoverrate60",], start = c(2013, 1), frequency = 12)
+
+plot(turnoverrate60,type = "l",main = "turnoverrate60")
+
+
+abline(h = 0, col = "red")
+abline(v = 2017, col = "red")
+
+lines(turnoverrate60.forecast, col = "blue")
+```
+
+
+### 2.3 deductprofit.simple.rate
+
+```{r , fig.height=6, fig.width=12, echo=FALSE,eval=TRUE}
+deductprofit.simple.rate <- ts(result.F.hat.g["deductprofit.simple.rate",], start = c(2008, 1), frequency = 12)
+
+deductprofit.simple.rate.forecast <- ts(result.factor.forecast["deductprofit.simple.rate",], start = c(2013, 1), frequency = 12)
+
+plot(deductprofit.simple.rate,type = "l",main = "deductprofit.simple.rate")
+
+
+abline(h = 0, col = "red")
+abline(v = 2017, col = "red")
+
+lines(deductprofit.simple.rate.forecast, col = "blue")
+```
+
+### 2.4 momentum.12month
+
+```{r , fig.height=6, fig.width=12, echo=FALSE,eval=TRUE}
+momentum.12month <- ts(result.F.hat.g["momentum.12month",], start = c(2008, 1), frequency = 12)
+
+momentum.12month.forecast <- ts(result.factor.forecast["momentum.12month",], start = c(2013, 1), frequency = 12)
+
+plot(momentum.12month,type = "l", main = "momentum.12month")
+lines(momentum.12month.forecast, col = "blue")
+abline(h = 0, col = "red")
+abline(v = 2017, col = "red")
+```
+
+```{r , fig.height=6, fig.width=12, echo=FALSE}
+# momentum.12month.forecast.comparison.36month <- ts(result.factor.forecast.comparison.36month["momentum.12month",], start = c(2013, 1), frequency = 12)
+# 
+# plot(momentum.12month,type = "l", main = "momentum.12month")
+# lines(momentum.12month.forecast.comparison.36month, col = "purple")
+# 
+# abline(h = 0, col = "red")
+# abline(v = 2017, col = "red")
+```
+
+```{r}
+# round(sqrt(mean((head(momentum.12month.forecast, comparison.period - 1) - tail(momentum.12month, comparison.period - 1))^2)), digits = 8)
+# 
+# round(sqrt(mean((head(momentum.12month.forecast.comparison.36month, comparison.period - 1) - tail(momentum.12month, comparison.period - 1))^2)), digits = 8)
+```
+
+
+### 2.5 momentum.3month
+
+```{r , fig.height=6, fig.width=12, echo=FALSE,eval=TRUE}
+momentum.3month <- ts(result.F.hat.g["momentum.3month",], start = c(2008, 1), frequency = 12)
+momentum.3month.forecast <- ts(result.factor.forecast["momentum.3month",], start = c(2013, 1), frequency = 12)
+
+plot(momentum.3month,type = "l", main = "momentum.3month")
+
+
+abline(h = 0, col = "red")
+abline(v = 2017, col = "red")
+
+lines(momentum.3month.forecast, col = "blue")
+```
+
+```{r , fig.height=6, fig.width=12, echo=FALSE}
+
+# momentum.3month.forecast.comparison.36month <- ts(result.factor.forecast.comparison.36month["momentum.3month",], start = c(2013, 1), frequency = 12)
+# 
+# plot(momentum.3month,type = "l", main = "momentum.3month")
+# lines(momentum.3month.forecast.comparison.36month, col = "purple")
+# 
+# abline(h = 0, col = "red")
+# abline(v = 2017, col = "red")
+```
+
+```{r}
+# round(sqrt(mean((head(momentum.3month.forecast, comparison.period - 1) - tail(momentum.3month, comparison.period - 1))^2)), digits = 8)
+# 
+# round(sqrt(mean((head(momentum.3month.forecast.comparison.36month, comparison.period - 1) - tail(momentum.3month, comparison.period - 1))^2)), digits = 8)
+```
+
+
+### 2.6 val.lnmv
+
+```{r , fig.height=6, fig.width=12, echo=FALSE}
+val.lnmv <- ts(result.F.hat.g["val.lnmv",], start = c(2008, 1), frequency = 12)
+val.lnmv.forecast <- ts(result.factor.forecast["val.lnmv",], start = c(2013, 1), frequency = 12)
+
+plot(val.lnmv,type = "l", main = "val.lnmv.arima")
+
+
+abline(h = 0, col = "red")
+abline(v = 2017, col = "red")
+
+lines(val.lnmv.forecast, col = "blue")
+```
+
+
+
+```{r , fig.height=6, fig.width=12, echo=FALSE}
+
+val.lnmv.forecast.comparison.12month <- ts(result.factor.forecast.comparison.12month["val.lnmv",], start = c(2013, 1), frequency = 12)
+
+plot(val.lnmv,type = "l", main = "val.lnmv.ets.12m")
+lines(val.lnmv.forecast.comparison.12month, col = "purple")
+
+abline(h = 0, col = "red")
+abline(v = 2017, col = "red")
+```
+
+
+
+
+```{r}
+round(sqrt(mean((head(val.lnmv.forecast, comparison.period - 1) - tail(val.lnmv, comparison.period - 1))^2)), digits = 8)
+
+round(sqrt(mean((head(val.lnmv.forecast.comparison.12month, comparison.period - 1) - tail(val.lnmv, comparison.period - 1))^2)), digits = 8)
+
+
+```
+
+
+
+### 2.7 dividendyield
+
+```{r , fig.height=6, fig.width=12, echo=FALSE,eval=TRUE}
+dividendyield <- ts(result.F.hat.g["dividendyield",], start = c(2008, 1), frequency = 12)
+dividendyield.forecast <- ts(result.factor.forecast["dividendyield",], start = c(2013, 1), frequency = 12)
+
+plot(dividendyield,type = "l", main = "dividendyield")
+
+
+abline(h = 0, col = "red")
+abline(v = 2017, col = "red")
+
+lines(dividendyield.forecast, col = "blue")
+```
+
+```{r , fig.height=6, fig.width=12, echo=FALSE}
+
+# dividendyield.forecast.comparison.36month <- ts(result.factor.forecast.comparison.36month["dividendyield",], start = c(2013, 1), frequency = 12)
+# 
+# plot(dividendyield,type = "l", main = "dividendyield")
+# lines(dividendyield.forecast.comparison.36month, col = "purple")
+# 
+# abline(h = 0, col = "red")
+# abline(v = 2017, col = "red")
+```
+
+```{r , fig.height=6, fig.width=12, echo=FALSE}
+
+# dividendyield.forecast.arima.36month <- ts(result.factor.forecast.arima.36month["dividendyield",], start = c(2013, 1), frequency = 12)
+# 
+# plot(dividendyield,type = "l", main = "dividendyield.arima.36m")
+# lines(dividendyield.forecast.arima.36month, col = "purple")
+# 
+# abline(h = 0, col = "red")
+# abline(v = 2017, col = "red")
+```
+
+
+```{r}
+# round(sqrt(mean((head(dividendyield.forecast, comparison.period - 1) - tail(dividendyield, comparison.period - 1))^2)), digits = 8)
+# 
+# round(sqrt(mean((head(dividendyield.forecast.comparison.36month, comparison.period - 1) - tail(dividendyield, comparison.period - 1))^2)), digits = 8)
+# 
+# round(sqrt(mean((head(dividendyield.forecast.arima.36month, comparison.period - 1) - tail(dividendyield, comparison.period - 1))^2)), digits = 8)
+```
+
+### 2.8 holder.sumpcttop5
+
+```{r , fig.height=6, fig.width=12, echo=FALSE,eval=TRUE}
+holder.sumpcttop5 <- ts(result.F.hat.g["holder.sumpcttop5",], start = c(2008, 1), frequency = 12)
+holder.sumpcttop5.forecast <- ts(result.factor.forecast["holder.sumpcttop5",], start = c(2013, 1), frequency = 12)
+
+plot(holder.sumpcttop5,type = "l", main = "holder.sumpcttop5")
+
+
+abline(h = 0, col = "red")
+abline(v = 2017, col = "red")
+
+lines(holder.sumpcttop5.forecast, col = "blue")
+```
+
+```{r , fig.height=6, fig.width=12, echo=FALSE}
+
+# holder.sumpcttop5.forecast.comparison.36month <- ts(result.factor.forecast.comparison.36month["holder.sumpcttop5",], start = c(2013, 1), frequency = 12)
+# 
+# plot(holder.sumpcttop5,type = "l", main = "holder.sumpcttop5")
+# lines(holder.sumpcttop5.forecast.comparison.36month, col = "purple")
+# 
+# abline(h = 0, col = "red")
+# abline(v = 2017, col = "red")
+```
+
+```{r}
+# round(sqrt(mean((head(holder.sumpcttop5.forecast, comparison.period - 1) - tail(holder.sumpcttop5, comparison.period - 1))^2)), digits = 8)
+# 
+# round(sqrt(mean((head(holder.sumpcttop5.forecast.comparison.36month, comparison.period - 1) - tail(holder.sumpcttop5, comparison.period - 1))^2)), digits = 8)
+```
+
+
+### 2.9 rating.avg
+
+```{r , fig.height=6, fig.width=12, echo=FALSE,eval=TRUE}
+rating.avg <- ts(result.F.hat.g["rating.avg",], start = c(2008, 1), frequency = 12)
+rating.avg.forecast <- ts(result.factor.forecast["rating.avg",], start = c(2013, 1), frequency = 12)
+
+plot(rating.avg,type = "l",main = "rating.avg")
+abline(h = 0, col = "red")
+abline(v = 2017, col = "red")
+
+lines(rating.avg.forecast, col = "blue")
+
+
+```
+
+### 2.10 roe
+
+```{r , fig.height=6, fig.width=12, echo=FALSE,eval=TRUE}
+roe <- ts(result.F.hat.g["roe",], start = c(2008, 1), frequency = 12)
+roe.forecast <- ts(result.factor.forecast["roe",], start = c(2013, 1), frequency = 12)
+
+plot(roe,type = "l", main = "roe")
+abline(h = 0, col = "red")
+abline(v = 2017, col = "red")
+
+lines(roe.forecast, col = "blue")
+
+
+```
+
+### 2.11 risk.variance60
+
+```{r , fig.height=6, fig.width=12, echo=FALSE,eval=TRUE}
+risk.variance60 <- ts(result.F.hat.g["risk.variance60",], start = c(2008, 1), frequency = 12)
+risk.variance60.forecast <- ts(result.factor.forecast["risk.variance60",], start = c(2013, 1), frequency = 12)
+
+plot(risk.variance60,type = "l", main = "risk.variance60")
+abline(h = 0, col = "red")
+abline(v = 2017, col = "red")
+
+lines(risk.variance60.forecast, col = "blue")
+```
+
+```{r , fig.height=6, fig.width=12, echo=FALSE}
+
+# risk.variance60.forecast.comparison.24month <- ts(result.factor.forecast.comparison.24month["risk.variance60",], start = c(2013, 1), frequency = 12)
+# 
+# plot(risk.variance60,type = "l", main = "risk.variance60.ets.24m")
+# lines(risk.variance60.forecast.comparison.24month, col = "purple")
+# 
+# abline(h = 0, col = "red")
+# abline(v = 2017, col = "red")
+```
+
+```{r}
+# round(sqrt(mean((head(risk.variance60.forecast, comparison.period - 1) - tail(risk.variance60, comparison.period - 1))^2)), digits = 8)
+# 
+# 
+# round(sqrt(mean((head(risk.variance60.forecast.comparison.24month, comparison.period - 1) - tail(risk.variance60, comparison.period - 1))^2)), digits = 8)
+
+```

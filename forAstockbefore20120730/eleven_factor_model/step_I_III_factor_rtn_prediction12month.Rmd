@@ -1,0 +1,147 @@
+---
+title: "11 factors"
+author: "Wu Wei"
+date: "2018-5-16"
+output: html_document
+---
+
+
+
+## Library input
+```{r}
+rm(list = ls())
+
+library(forecast)
+
+```
+
+## Data Input
+
+
+```{r}
+load("comparison.F.hat.g")
+
+```
+
+
+## Data Processing
+
+```{r}
+t.result.F.hat.g <- t(result.F.hat.g)
+
+```
+
+```{r}
+comparison.period <- 61
+
+forecast.period <- 1
+
+training.set.endpoint <- nrow(t.result.F.hat.g) - comparison.period
+
+```
+
+
+```{r}
+
+for(i in 1:comparison.period){
+        
+        # for(i in 1:1){
+        
+        # for(i in comparison.period:comparison.period){
+        
+        
+        index <- training.set.endpoint + i
+        
+        # j <- 1        
+        factor.forecast <- rbind(apply(head(t.result.F.hat.g, index), 
+                                       2, 
+                                       function(x,  colname =   colnames(t.result.F.hat.g)[j]) {
+                                               
+                                               # if(colname %in% c("val.lnmv", "momentum.12month")){
+                                                       result <- forecast(ets(tail(x,12)), h = forecast.period)$mean
+                                               # }else{
+                                               #         
+                                               #         fit.arima <- auto.arima(x)
+                                               #         
+                                               #         if(sum(fit.arima$arma[c(1,6,2)]) == 0){
+                                               #                 result <- forecast(ets(x), h = forecast.period)$mean
+                                               #                 
+                                               #         }else{
+                                               #                 result <- forecast(fit.arima, h = forecast.period)$mean        
+                                               #         }                        
+                                               # }                               
+                                               # 
+                                               
+                                               
+                                               # j <<- j + 1
+                                               return(result)
+                                       }))
+        
+        epttm <- factor.forecast[,"epttm"]
+        epttm[epttm < 0] <- 0
+        factor.forecast[,"epttm"] <- epttm
+        
+        turnoverrate60 <- factor.forecast[,"turnoverrate60"]
+        turnoverrate60[turnoverrate60 > 0] <- 0
+        factor.forecast[,"turnoverrate60"] <- turnoverrate60
+        
+        deductprofit.simple.rate <- factor.forecast[,"deductprofit.simple.rate"]
+        deductprofit.simple.rate[deductprofit.simple.rate < 0] <- 0
+        factor.forecast[,"deductprofit.simple.rate"] <- deductprofit.simple.rate
+
+        # momentum.12month <- factor.forecast[,"momentum.12month"]
+        # momentum.12month[momentum.12month > 0] <- 0
+        # factor.forecast[,"momentum.12month"] <- momentum.12month
+        # 
+        # momentum.3month <- factor.forecast[,"momentum.3month"]
+        # momentum.3month[momentum.3month > 0] <- 0
+        # factor.forecast[,"momentum.3month"] <- momentum.3month
+
+        # val.lnmv <- factor.forecast[,"val.lnmv"]
+        # val.lnmv[val.lnmv > 0] <- 0
+        # factor.forecast[,"val.lnmv"] <- val.lnmv
+        
+        dividendyield <- factor.forecast[,"dividendyield"]
+        dividendyield[dividendyield < 0] <- 0
+        factor.forecast[,"dividendyield"] <- dividendyield
+
+        holder.sumpcttop5 <- factor.forecast[,"holder.sumpcttop5"]
+        holder.sumpcttop5[holder.sumpcttop5 < 0] <- 0
+        factor.forecast[,"holder.sumpcttop5"] <- holder.sumpcttop5
+
+        rating.avg <- factor.forecast[,"rating.avg"]
+        rating.avg[rating.avg < 0] <- 0
+        factor.forecast[,"rating.avg"] <- rating.avg
+   
+        roe <- factor.forecast[,"roe"]
+        roe[roe < 0] <- 0
+        factor.forecast[,"roe"] <- roe
+
+
+        risk.variance60 <- factor.forecast[,"risk.variance60"]
+        risk.variance60[risk.variance60 > 0] <- 0
+        factor.forecast[,"risk.variance60"] <- risk.variance60
+
+
+        if(i == 1){
+                result.factor.forecast <- t(factor.forecast)
+
+        }else{
+                result.factor.forecast <- cbind(result.factor.forecast, t(factor.forecast))
+
+        }
+        
+}
+
+```
+
+```{r}
+colnames(result.factor.forecast) <- row.names(t.result.F.hat.g)[training.set.endpoint + (1:comparison.period)]
+```
+
+```{r}
+result.factor.forecast.comparison.12month <- result.factor.forecast
+
+save(result.factor.forecast.comparison.12month, file = "result.factor.forecast.comparison.12month")
+```
+

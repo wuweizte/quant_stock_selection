@@ -1,0 +1,112 @@
+---
+title: "Quant"
+author: "Wu Wei"
+date: "2018-5-22"
+output: html_document
+---
+
+
+
+## Library input
+```{r}
+rm(list = ls())
+
+suppressMessages(library(lubridate))
+suppressMessages(library(caret))
+suppressMessages(library(plyr))
+
+library(sca)
+
+```
+
+## Data Input
+
+```{r}
+
+monthly.holder.sumpcttop5 <-
+        read.csv("D:\\MyR\\quantprog\\forAstockbefore20120730\\BAcleandataforNAindustry\\processed.monthly.holder.sumpcttop5.csv",
+                                      stringsAsFactors = FALSE)
+
+```
+
+
+## Data Processing
+
+```{r}
+processed.monthly.holder.sumpcttop5 <- t(monthly.holder.sumpcttop5[,-c(1,ncol(monthly.holder.sumpcttop5))])
+
+holder.sumpcttop5.column.names <- monthly.holder.sumpcttop5[,1]
+
+holder.sumpcttop5.row.names <- colnames(monthly.holder.sumpcttop5)[-c(1, length(monthly.holder.sumpcttop5))]
+
+
+processed.monthly.holder.sumpcttop5 <- array(as.numeric(processed.monthly.holder.sumpcttop5),
+                                      dim = dim(processed.monthly.holder.sumpcttop5))
+
+colnames(processed.monthly.holder.sumpcttop5) <- holder.sumpcttop5.column.names
+
+row.names(processed.monthly.holder.sumpcttop5) <- holder.sumpcttop5.row.names
+
+####delete the data of 2007-12
+# processed.monthly.holder.sumpcttop5 <- processed.monthly.holder.sumpcttop5[-1,]
+
+
+```
+
+```{r}
+
+delimitvalue.monthly.holder.sumpcttop5 <- apply(processed.monthly.holder.sumpcttop5, 1, function(x) {
+        median.value <- median(x, na.rm = TRUE)
+        md.sd <- median(abs(x - median.value), na.rm = TRUE)
+        
+        # browser()
+        uplimit <- median.value + 3 * md.sd
+        lowlimit <- median.value - 3 * md.sd
+        x[x > uplimit] <- uplimit
+        x[x < lowlimit] <- lowlimit
+        return(x)
+})
+
+```
+
+```{r}
+### 两次去极值
+
+delimitvalue.monthly.holder.sumpcttop5 <- apply(delimitvalue.monthly.holder.sumpcttop5, 2, function(x) {
+        median.value <- median(x, na.rm = TRUE)
+        md.sd <- median(abs(x - median.value), na.rm = TRUE)
+        
+        # browser()
+        uplimit <- median.value + 3 * md.sd
+        lowlimit <- median.value - 3 * md.sd
+        x[x > uplimit] <- uplimit
+        x[x < lowlimit] <- lowlimit
+        return(x)
+})
+
+```
+
+
+```{r}
+preProcValues <- preProcess(delimitvalue.monthly.holder.sumpcttop5, method = c("center","scale"))
+
+standardlized.monthly.holder.sumpcttop5 <- predict(preProcValues, delimitvalue.monthly.holder.sumpcttop5)
+
+standardlized.monthly.holder.sumpcttop5[is.na(standardlized.monthly.holder.sumpcttop5)] <- 0
+```
+
+```{r}
+standardlized.monthly.holder.sumpcttop5 <- 
+        standardlized.monthly.holder.sumpcttop5[,-ncol(standardlized.monthly.holder.sumpcttop5)]
+
+```
+
+
+```{r}
+
+write.csv(standardlized.monthly.holder.sumpcttop5, 
+          "standardlized.monthly.holder.sumpcttop5.csv")
+
+
+```
+

@@ -1,0 +1,184 @@
+---
+title: "11 factors, 20120730"
+author: "Wu Wei"
+date: "2018-5-22"
+output: html_document
+---
+
+
+
+## Library input
+```{r}
+rm(list = ls())
+
+suppressMessages(library(lubridate))
+suppressMessages(library(caret))
+suppressMessages(library(plyr))
+
+library(sca)
+library(forecast)
+
+```
+
+## Data Input
+
+```{r}
+
+
+standardlized.monthly.price <- 
+        read.csv("D:\\MyR\\quantprog\\forAstockbefore20120730\\Bstandardlizefactor\\standardlized.monthly.price.csv", 
+                                                      stringsAsFactors = FALSE)
+
+
+monthly.industry.data <- 
+        read.csv("D:\\MyR\\quantprog\\forAstockbefore20120730\\BAcleandataforNAindustry\\processed.monthly.industry.data.csv", 
+                                  stringsAsFactors = FALSE)
+
+standardlized.monthly.epttm.data <- 
+        read.csv(
+        "D:\\MyR\\quantprog\\forAstockbefore20120730\\Bstandardlizefactor\\standardlized.monthly.epttm.data.csv", 
+        stringsAsFactors = FALSE)
+
+standardlized.monthly.tech.turnoverrate60 <- 
+        read.csv(
+        "D:\\MyR\\quantprog\\forAstockbefore20120730\\Bstandardlizefactor\\standardlized.monthly.tech.turnoverrate60.csv", 
+        stringsAsFactors = FALSE)
+
+standardlized.monthly.deductprofit.simple.rate <- 
+        read.csv(
+        "D:\\MyR\\quantprog\\forAstockbefore20120730\\Bstandardlizefactor\\standardlized.monthly.deductprofit.simple.rate.csv", 
+        stringsAsFactors = FALSE)
+
+standardlized.monthly.momentum.12month <- 
+        read.csv(
+        "D:\\MyR\\quantprog\\forAstockbefore20120730\\Bstandardlizefactor\\standardlized.monthly.momentum.12month.csv", 
+        stringsAsFactors = FALSE)
+
+standardlized.monthly.momentum.3month <- 
+        read.csv(
+        "D:\\MyR\\quantprog\\forAstockbefore20120730\\Bstandardlizefactor\\standardlized.monthly.momentum.3month.csv", 
+        stringsAsFactors = FALSE)
+
+
+standardlized.monthly.val.lnmv <- 
+        read.csv(
+        "D:\\MyR\\quantprog\\forAstockbefore20120730\\Bstandardlizefactor\\standardlized.monthly.val.lnmv.csv", 
+        stringsAsFactors = FALSE)
+
+standardlized.monthly.dividendyield <-
+        read.csv(
+        "D:\\MyR\\quantprog\\forAstockbefore20120730\\Bstandardlizefactor\\standardlized.monthly.dividendyield.csv",
+        stringsAsFactors = FALSE)
+
+standardlized.monthly.holder.sumpcttop5 <-
+        read.csv(
+        "D:\\MyR\\quantprog\\forAstockbefore20120730\\Bstandardlizefactor\\standardlized.monthly.holder.sumpcttop5.csv",
+        stringsAsFactors = FALSE)
+
+standardlized.monthly.rating.avg <-
+        read.csv(
+        "D:\\MyR\\quantprog\\forAstockbefore20120730\\Bstandardlizefactor\\standardlized.monthly.rating.avg.csv",
+        stringsAsFactors = FALSE)
+
+standardlized.monthly.roe.data <-
+        read.csv(
+        "D:\\MyR\\quantprog\\forAstockbefore20120730\\Bstandardlizefactor\\standardlized.monthly.roe.data.csv",
+        stringsAsFactors = FALSE)
+
+standardlized.monthly.risk.variance60 <-
+        read.csv(
+        "D:\\MyR\\quantprog\\forAstockbefore20120730\\Bstandardlizefactor\\standardlized.monthly.risk.variance60.csv",
+        stringsAsFactors = FALSE)
+
+```
+
+
+```{r}
+row.names(standardlized.monthly.price) <- standardlized.monthly.price[,1]
+standardlized.monthly.price <- standardlized.monthly.price[,-1]
+
+standardlized.monthly.price <- as.matrix(standardlized.monthly.price)
+```
+
+```{r}
+load(file = "comparison.F.hat.g")
+load(file = "comparison.E.hat.g")
+```
+
+
+
+## Data Processing
+
+```{r}
+comparison.period <- 61
+
+forecast.period <- 1
+
+### let the starting point to be same in different forecast.period
+training.set.endpoint <- nrow(standardlized.monthly.price) - comparison.period - forecast.period
+```
+
+
+
+```{r}
+stock.cov.matrix.list <- list()
+
+for(i in 1:comparison.period){
+# for(i in 1:1){
+
+        index <- training.set.endpoint + i
+        
+        diagD.hat.g <- apply(result.E.hat.g[,(index - 48):index], 1, var)
+        cov.f.matrix <- cov(t(result.F.hat.g[,(index - 48):index])) 
+        
+        # cov.f.matrix <- cov.f.matrix[-1,-1] 
+        
+
+        ####result.F.hat.g的index 对应时间标签仍然领先ind.dum的index + 1，有1位，此处既然是对下个月进行预测，ind.dum的时间标签应该为最新
+        #### 即与result.F.hat.g时间对齐
+        
+        # mainEffects <- dummyVars(as.formula(paste0(" ~ ", colnames(monthly.industry.data)[index + 2])),
+        #                          data = monthly.industry.data[,c(1,(index + 2))])
+        # 
+        # ind.dum <- predict(mainEffects, monthly.industry.data[,c(1, (index + 2))])
+        
+        ind.dum <- NULL
+        
+        ind.dum <- cbind(ind.dum,
+                         abcdefgh.epttm = standardlized.monthly.epttm.data[,(index + 2)],
+                         abcdefgh.turnoverrate60 = standardlized.monthly.tech.turnoverrate60[,(index + 2)],
+                         abcdefgh.deductprofit.simple.rate = standardlized.monthly.deductprofit.simple.rate[,(index + 2)],
+                         abcdefgh.momentum.12month = standardlized.monthly.momentum.12month[,(index + 2)],
+                         abcdefgh.momentum.3month = standardlized.monthly.momentum.3month[,(index + 2)],
+                         
+                         abcdefgh.val.lnmv = standardlized.monthly.val.lnmv[,(index + 2)],
+                         abcdefgh.dividendyield = standardlized.monthly.dividendyield[,(i + 1)],
+                         abcdefgh.holder.sumpcttop5 = standardlized.monthly.holder.sumpcttop5[,(i + 1)],
+                         abcdefgh.rating.avg = standardlized.monthly.rating.avg[,(i + 1)],
+                         abcdefgh.roe = standardlized.monthly.roe.data[,(i + 1)],
+                         abcdefgh.risk.variance60 = standardlized.monthly.risk.variance60[,(i + 1)]
+                         
+                         
+        )
+        
+        stock.cov.matrix <- ind.dum %*% cov.f.matrix %*% t(ind.dum) + diag(diagD.hat.g)
+        row.names(stock.cov.matrix) <- monthly.industry.data$code
+        colnames(stock.cov.matrix) <- monthly.industry.data$code         
+        
+        stock.cov.matrix.list[[colnames(monthly.industry.data)[index + 2]]] <- stock.cov.matrix
+}
+
+
+
+```
+
+
+
+```{r}
+save(stock.cov.matrix.list, file = "stock.cov.matrix.list")
+```
+
+```{r}
+# load(file = "stock.cov.matrix.list")
+```
+

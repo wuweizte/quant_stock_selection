@@ -1,0 +1,88 @@
+---
+title: "Quant"
+author: "Wu Wei"
+date: "2018-5-22"
+output: html_document
+---
+
+
+
+## Library input
+```{r}
+rm(list = ls())
+
+suppressMessages(library(lubridate))
+suppressMessages(library(caret))
+suppressMessages(library(plyr))
+
+library(sca)
+
+```
+
+## Data Input
+
+```{r}
+monthly.holder.sumpcttop5 <- 
+        read.csv("D:\\MyR\\quantprog\\forallAstock\\Acollectdata\\monthly.holder.sumpcttop5.csv", 
+                                      stringsAsFactors = FALSE)
+
+monthly.industry.data <- 
+        read.csv("D:\\MyR\\quantprog\\forallAstock\\Acollectdata\\monthly.industry.data.csv", 
+                                  stringsAsFactors = FALSE)
+
+```
+
+```{r}
+load("D:\\MyR\\quantprog\\forAstockbefore20120730\\BAcleandataforNAindustry\\stockcode")
+```
+
+## Data Processing
+
+
+```{r}
+monthly.industry.data <- monthly.industry.data[,-1]
+
+```
+
+```{r}
+monthly.industry.data <- monthly.industry.data[monthly.industry.data$code %in% stockcode,]
+
+```
+
+
+```{r}
+monthly.holder.sumpcttop5 <- monthly.holder.sumpcttop5[monthly.holder.sumpcttop5$X %in% stockcode,]
+
+```
+
+
+
+```{r}
+nan.code.industry.data <- monthly.industry.data[monthly.industry.data[,2] == "NaN",1]
+
+for(i in 1:length(nan.code.industry.data)){
+
+# for(i in 1:2){
+
+        nan.stock.code <- nan.code.industry.data[i]
+        
+        nan.code.industry.detail <- monthly.industry.data[monthly.industry.data[,1] == nan.stock.code,]
+        
+        nan.col.id.industry <- which(nan.code.industry.detail == "NaN")
+        
+        monthly.holder.sumpcttop5[monthly.holder.sumpcttop5[,1] == nan.stock.code, nan.col.id.industry] <- NA
+
+}
+```
+
+
+
+```{r}
+
+write.csv(monthly.holder.sumpcttop5, 
+          "processed.monthly.holder.sumpcttop5.csv",
+          row.names = FALSE)
+
+
+```
+

@@ -1,0 +1,172 @@
+---
+title: "monthly.dividendyield"
+author: "Wu Wei"
+date: "2018-5-22"
+output: html_document
+---
+
+
+
+## Library input
+```{r}
+rm(list = ls())
+
+suppressMessages(library(lubridate))
+suppressMessages(library(caret))
+suppressMessages(library(plyr))
+
+library(sca)
+
+```
+
+## Data Input
+
+```{r}
+monthly.dividendyield <- 
+        read.csv("D:\\MyR\\quantprog\\forallAstock\\Acollectdata\\monthly.dividendyield.csv", 
+                               stringsAsFactors = FALSE)
+
+
+```
+
+
+```{r}
+load("D:\\MyR\\quantprog\\forAstockbefore20120730\\BAcleandataforNAindustry\\stockcode")
+```
+
+
+## Data Processing
+
+
+```{r}
+processed.monthly.dividendyield <- monthly.dividendyield[,-1]
+
+row.names(processed.monthly.dividendyield) <- monthly.dividendyield[,1]
+
+```
+
+
+```{r}
+processed.monthly.dividendyield <- processed.monthly.dividendyield[,-ncol(processed.monthly.dividendyield)]
+```
+
+```{r}
+processed.monthly.dividendyield <- 
+        processed.monthly.dividendyield[row.names(processed.monthly.dividendyield) %in% stockcode,]
+
+```
+
+
+```{r}
+hist(processed.monthly.dividendyield[,1])
+hist(processed.monthly.dividendyield[,100])
+```
+
+
+
+```{r}
+
+
+# delimitvalue.monthly.epttm.data <- apply(processed.monthly.epttm.data, 2, function(x) {
+#         median.value <- median(x, na.rm = TRUE)
+#         md.sd <- median(abs(x - median.value), na.rm = TRUE)
+#         
+#         # browser()
+#         uplimit <- median.value + 3 * md.sd
+#         lowlimit <- median.value - 3 * md.sd
+#         x[x > uplimit] <- uplimit
+#         x[x < lowlimit] <- lowlimit
+#         return(x)
+# })
+
+```
+
+```{r}
+# hist(delimitvalue.monthly.epttm.data[,1])
+# hist(delimitvalue.monthly.epttm.data[,100])
+```
+
+
+```{r}
+
+
+delimitvalue.monthly.dividendyield <- apply(processed.monthly.dividendyield, 2, function(x) {
+        median.value <- median(x, na.rm = TRUE)
+        md.sd <- median(abs(x - median.value), na.rm = TRUE)
+
+        if(md.sd == 0){
+                md.sd <- sd(x, na.rm = TRUE)
+        }
+        
+        # browser()
+        
+        uplimit <- median.value + 5 * md.sd
+        lowlimit <- median.value - 5 * md.sd
+        x[x > uplimit] <- uplimit
+        x[x < lowlimit] <- lowlimit
+        return(x)
+})
+
+```
+
+```{r}
+hist(delimitvalue.monthly.dividendyield[,1])
+hist(delimitvalue.monthly.dividendyield[,100])
+```
+
+
+
+
+```{r}
+
+
+# delimitvalue.monthly.epttm.data <- apply(delimitvalue.monthly.epttm.data, 2, function(x) {
+#         median.value <- median(x, na.rm = TRUE)
+#         md.sd <- median(abs(x - median.value), na.rm = TRUE)
+#         
+#         # browser()
+#         uplimit <- median.value + 3 * md.sd
+#         lowlimit <- median.value - 3 * md.sd
+#         x[x > uplimit] <- uplimit
+#         x[x < lowlimit] <- lowlimit
+#         return(x)
+# })
+
+```
+
+```{r}
+# hist(delimitvalue.monthly.epttm.data[,1])
+# hist(delimitvalue.monthly.epttm.data[,100])
+```
+
+
+```{r}
+preProcValues <- preProcess(delimitvalue.monthly.dividendyield, method = c("center","scale"))
+
+standardlized.monthly.dividendyield <- predict(preProcValues, delimitvalue.monthly.dividendyield)
+```
+
+```{r}
+hist(standardlized.monthly.dividendyield[,1])
+hist(standardlized.monthly.dividendyield[,100])
+```
+
+```{r}
+
+standardlized.monthly.dividendyield[is.na(standardlized.monthly.dividendyield)] <- 0
+```
+
+```{r}
+hist(standardlized.monthly.dividendyield[,1])
+hist(standardlized.monthly.dividendyield[,100])
+```
+
+
+```{r}
+
+write.csv(standardlized.monthly.dividendyield, 
+          "standardlized.monthly.dividendyield.csv")
+
+
+```
+
