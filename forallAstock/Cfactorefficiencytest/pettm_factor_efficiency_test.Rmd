@@ -23,9 +23,14 @@ library(sca)
 
 ```{r}
 
-monthly.price.data <- 
-        read.csv("D:\\MyR\\quantprog\\forallAstock\\Acollectdata\\monthly.price.data.csv", 
-                               stringsAsFactors = FALSE)
+# monthly.price.data <- 
+#         read.csv("D:\\MyR\\quantprog\\forallAstock\\Acollectdata\\monthly.price.data.csv", 
+#                                stringsAsFactors = FALSE)
+
+standardlized.monthly.price <- 
+        read.csv("D:\\MyR\\quantprog\\forallAstock\\Bstandardlizefactor\\standardlized.monthly.price.csv", 
+                                                      stringsAsFactors = FALSE)
+
 
 monthly.industry.data <- 
         read.csv("D:\\MyR\\quantprog\\forallAstock\\Acollectdata\\monthly.industry.data.csv", 
@@ -37,20 +42,29 @@ standardlized.monthly.pettm.data <-
 
 monthly.industry.data <- monthly.industry.data[,-1]
 
-row.names(monthly.price.data) <- monthly.price.data[,1]
-monthly.price.data <- monthly.price.data[,-1]
+# row.names(monthly.price.data) <- monthly.price.data[,1]
+# monthly.price.data <- monthly.price.data[,-1]
+# 
+# monthly.price.data <- as.matrix(monthly.price.data)
+```
 
-monthly.price.data <- as.matrix(monthly.price.data)
+```{r}
+
+
+row.names(standardlized.monthly.price) <- standardlized.monthly.price[,1]
+standardlized.monthly.price <- standardlized.monthly.price[,-1]
+
+standardlized.monthly.price <- as.matrix(standardlized.monthly.price)
 ```
 
 
 ## Data Processing
 
 ```{r}
-rm <- matrix(apply(monthly.price.data,2,mean),1)
-rtn <- monthly.price.data - matrix(1,nrow(monthly.price.data),1) %*% rm
+# rm <- matrix(apply(monthly.price.data,2,mean),1)
+# rtn <- monthly.price.data - matrix(1,nrow(monthly.price.data),1) %*% rm
 
-
+rtn <- standardlized.monthly.price
 ```
 
 

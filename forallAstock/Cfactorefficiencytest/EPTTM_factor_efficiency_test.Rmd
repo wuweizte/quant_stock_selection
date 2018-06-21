@@ -1,5 +1,5 @@
 ---
-title: "momentum_12month_factor_efficiency_test"
+title: "epttm_factor_efficiency_test"
 author: "Wu Wei"
 date: "2018-1-25"
 output: html_document
@@ -36,9 +36,9 @@ monthly.industry.data <-
         read.csv("D:\\MyR\\quantprog\\forallAstock\\Acollectdata\\monthly.industry.data.csv", 
                                   stringsAsFactors = FALSE)
 
-standardlized.monthly.momentum.12month <- 
-        read.csv("D:\\MyR\\quantprog\\forallAstock\\Bstandardlizefactor\\standardlized.monthly.momentum.12month.csv", 
-                                                      stringsAsFactors = FALSE)
+standardlized.monthly.epttm.data <- 
+        read.csv("D:\\MyR\\quantprog\\forallAstock\\Bstandardlizefactor\\standardlized.monthly.epttm.data.csv", 
+                                             stringsAsFactors = FALSE)
 
 monthly.industry.data <- monthly.industry.data[,-1]
 
@@ -80,7 +80,7 @@ for(i in 1:nrow(rtn)){
 
         ind.dum <- predict(mainEffects, monthly.industry.data[,c(1, (i + 1))])
 
-        ind.dum <- cbind(ind.dum, standardlized.monthly.momentum.12month[,(i + 1)])
+        ind.dum <- cbind(ind.dum, standardlized.monthly.epttm.data[,(i + 1)])
         
         F.hat.o <- solve(crossprod(ind.dum)) %*% t(ind.dum) %*% t(rtn)[,i]
 
