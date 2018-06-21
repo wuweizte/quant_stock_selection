@@ -1,0 +1,178 @@
+---
+title: "Quant"
+author: "Wu Wei"
+date: "2018-1-25"
+output: html_document
+---
+
+
+
+## Library input
+```{r}
+rm(list = ls())
+
+suppressMessages(library(lubridate))
+suppressMessages(library(caret))
+
+suppressMessages(library(WindR))
+w.start()
+
+```
+
+## Data Input
+
+```{r}
+w_wset_data<-w.wset('sectorconstituent','date=2018-01-25;sectorid=a001010100000000')
+
+stockcode <- w_wset_data$Data$wind_code
+
+```
+
+
+```{r}
+
+w_tdays_data<-w.tdays("2007-12-01","2018-1-31","Period=M")
+
+tdate <- as.character(w_tdays_data$Data$DATETIME)
+
+tdate <- gsub("-","",tdate)
+```
+
+```{r}
+
+for(i in 1:length(tdate)){
+
+# for(i in 1:2){
+
+       tradedatepara <- paste0('tradeDate=', tdate[i])
+       
+
+       w_wss_mvtofcff<-w.wss(stockcode,'val_mvtofcff',tradedatepara)
+       
+        if(i == 1){
+                monthly.mvtofcff <- w_wss_mvtofcff$Data
+        }else{
+                monthly.mvtofcff <- cbind(monthly.mvtofcff, 
+                                            w_wss_mvtofcff$Data$VAL_MVTOFCFF)
+                
+        }
+
+
+}
+```
+
+
+```{r}
+colnames(monthly.mvtofcff) <- c("code", paste0("d",tdate))
+row.names(monthly.mvtofcff) <- monthly.mvtofcff[,"code"]
+
+```
+
+```{r}
+monthly.mvtofcff <- monthly.mvtofcff[,-1]
+
+```
+
+```{r}
+monthly.mvtofcff <- as.matrix(monthly.mvtofcff)
+
+monthly.fcfftomv <- 1 / monthly.mvtofcff
+```
+
+
+
+```{r}
+write.csv(monthly.fcfftomv, "monthly.fcfftomv.csv")
+
+```
+
+
+```{r}
+
+for(i in 1:length(tdate)){
+
+# for(i in 1:2){
+
+       tradedatepara <- paste0('tradeDate=', tdate[i])
+
+       w_wss_dividendyield<-w.wss(stockcode,'dividendyield2',tradedatepara)
+       
+        if(i == 1){
+                monthly.dividendyield <- w_wss_dividendyield$Data
+        }else{
+                monthly.dividendyield <- cbind(monthly.dividendyield, 
+                                            w_wss_dividendyield$Data$DIVIDENDYIELD2)
+                
+        }
+
+
+}
+```
+
+
+```{r}
+colnames(monthly.dividendyield) <- c("code", paste0("d",tdate))
+row.names(monthly.dividendyield) <- monthly.dividendyield[,"code"]
+
+```
+
+```{r}
+monthly.dividendyield <- monthly.dividendyield[,-1]
+
+```
+
+
+
+
+```{r}
+write.csv(monthly.dividendyield, "monthly.dividendyield.csv")
+
+```
+
+
+
+
+```{r}
+#################  Trade Status
+
+for(i in 1:length(tdate)){
+
+# for(i in 1:2){
+
+       tradedatepara <- paste0('tradeDate=', tdate[i])
+
+       w_wss_trade_status<-w.wss(stockcode,'trade_status',tradedatepara)
+       
+        if(i == 1){
+                monthly.trade.status <- w_wss_trade_status$Data
+        }else{
+                monthly.trade.status <- cbind(monthly.trade.status, 
+                                            w_wss_trade_status$Data$TRADE_STATUS)
+                
+        }
+
+
+}
+```
+
+
+```{r}
+colnames(monthly.trade.status) <- c("code", paste0("d",tdate))
+row.names(monthly.trade.status) <- monthly.trade.status[,"code"]
+
+```
+
+```{r}
+monthly.trade.status <- monthly.trade.status[,-1]
+
+```
+
+
+
+
+```{r}
+write.csv(monthly.trade.status, "monthly.trade.status.csv")
+
+```
+
+

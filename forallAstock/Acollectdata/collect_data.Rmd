@@ -26,7 +26,13 @@ w_wset_data<-w.wset('sectorconstituent','date=2018-01-25;sectorid=a0010101000000
 
 stockcode <- w_wset_data$Data$wind_code
 
+stock.code.name <- paste0(w_wset_data$Data$wind_code, " ", w_wset_data$Data$sec_name)
 ```
+
+```{r}
+save(stock.code.name, file = "stock.code.name")
+```
+
 
 ```{r}
 
@@ -121,10 +127,12 @@ for(i in 1:length(tdate)){
 #### 60日平均换手率
 ####前5大股东持股比例之和
 
+# stockcode = "300654.SZ"
 
 for(i in 1:length(tdate)){
 
-
+# for(i in 1:2){
+        
        tradedatepara <- paste0('tradeDate=', tdate[i])
 
        w_wss_risk_variance60<-w.wss(stockcode,
@@ -222,6 +230,14 @@ for(i in 1:length(tdate)){
 w_wsd_hushen300<-w.wsd("000300.SH","close","2007-12-01","2018-1-31","Period=M;PriceAdj=F")
 
 hushen300.monthly.price <- w_wsd_hushen300$Data$CLOSE
+
+```
+
+
+```{r}
+w_wsd_zz500<-w.wsd("000905.SH","close","2007-12-01","2018-1-31","Period=M;PriceAdj=F")
+
+zz500.monthly.price <- w_wsd_zz500$Data$CLOSE
 
 ```
 
@@ -414,10 +430,16 @@ monthly.industry.data <- monthly.industry.data[,-2]
 hushen300.monthly.price <- cbind(diff(log(hushen300.monthly.price)))
 
 row.names(hushen300.monthly.price) <- paste0("d",tdate[-1])
- 
-
 
 ```
+
+```{r}
+zz500.monthly.price <- cbind(diff(log(zz500.monthly.price)))
+
+row.names(zz500.monthly.price) <- paste0("d",tdate[-1])
+
+```
+
 
 
 ```{r}
@@ -454,6 +476,7 @@ write.csv(monthly.risk.variance60, "monthly.risk.variance60.csv")
 write.csv(monthly.tech.turnoverrate60, "monthly.tech.turnoverrate60.csv")
 
 write.csv(hushen300.monthly.price, "hushen300.monthly.price.csv")
+write.csv(zz500.monthly.price, "zz500.monthly.price.csv")
 
 write.csv(monthly.deductprofit.rate, "originaldata.deductprofit.rate.csv")
 

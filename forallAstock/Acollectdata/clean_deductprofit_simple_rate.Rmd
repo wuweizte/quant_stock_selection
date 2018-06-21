@@ -37,6 +37,25 @@ monthly.deductprofit.ttm <- monthly.deductprofit.ttm[,-1]
 ```
 
 ```{r}
+monthly.deductprofit.sign <- monthly.deductprofit.ttm
+
+monthly.deductprofit.sign[monthly.deductprofit.sign >= 0] <- "profit"
+monthly.deductprofit.sign[monthly.deductprofit.sign < 0] <- "loss"
+```
+
+```{r}
+monthly.deductprofit.sign <- monthly.deductprofit.sign[-(1:6),]
+```
+
+
+
+```{r}
+
+write.csv(t(monthly.deductprofit.sign), "monthly.deductprofit.sign.csv")
+```
+
+
+```{r}
 monthly.deductprofit.ttm[is.na(monthly.deductprofit.ttm)] <- 0
 
 deductprofit.rate.numerator <- diff(ts(monthly.deductprofit.ttm))

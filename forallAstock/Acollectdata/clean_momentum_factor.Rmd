@@ -37,12 +37,16 @@ original.price.data <- original.price.data[,-1]
 ```
 
 ```{r}
+monthly.momentum.3month <- diff(ts(log(t(original.price.data))), lag = 3)
+
 monthly.momentum.6month <- diff(ts(log(t(original.price.data))), lag = 6)
 
 monthly.momentum.12month <- diff(ts(log(t(original.price.data))), lag = 12)
 ```
 
 ```{r}
+row.names.momentum.3month <- colnames(original.price.data)[-c(1:3,length(original.price.data))]
+
 row.names.momentum.6month <- colnames(original.price.data)[-c(1:6,length(original.price.data))]
 
 row.names.momentum.12month <- colnames(original.price.data)[-c(1:12,length(original.price.data))]
@@ -50,12 +54,16 @@ row.names.momentum.12month <- colnames(original.price.data)[-c(1:12,length(origi
 ```
 
 ```{r}
+monthly.momentum.3month <- monthly.momentum.3month[-nrow(monthly.momentum.3month),]
+
 monthly.momentum.6month <- monthly.momentum.6month[-nrow(monthly.momentum.6month),]
 
 monthly.momentum.12month <- monthly.momentum.12month[-nrow(monthly.momentum.12month),]
 ```
 
 ```{r}
+row.names(monthly.momentum.3month) <- row.names.momentum.3month
+
 row.names(monthly.momentum.6month) <- row.names.momentum.6month
 
 row.names(monthly.momentum.12month) <- row.names.momentum.12month
@@ -63,6 +71,8 @@ row.names(monthly.momentum.12month) <- row.names.momentum.12month
 ```
 
 ```{r}
+monthly.momentum.3month <- monthly.momentum.3month[-c(1:9),]
+
 monthly.momentum.6month <- monthly.momentum.6month[-c(1:6),]
 
 
@@ -71,6 +81,7 @@ monthly.momentum.6month <- monthly.momentum.6month[-c(1:6),]
 
 
 ```{r}
+write.csv(t(monthly.momentum.3month), "monthly.momentum.3month.csv")
 
 write.csv(t(monthly.momentum.6month), "monthly.momentum.6month.csv")
 
