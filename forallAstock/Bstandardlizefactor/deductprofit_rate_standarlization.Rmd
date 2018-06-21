@@ -22,7 +22,8 @@ library(sca)
 ## Data Input
 
 ```{r}
-monthly.deductprofit.simple.rate <- read.csv("D:\\MyR\\quantprog\\forallAstock\\Acollectdata\\monthly.deductprofit.simple.rate.csv", 
+monthly.deductprofit.simple.rate <- 
+        read.csv("D:\\MyR\\quantprog\\forallAstock\\BAcleandataforNAindustry\\processed.monthly.deductprofit.simple.rate.csv", 
                                       stringsAsFactors = FALSE)
 
 
@@ -90,6 +91,9 @@ delimitvalue.monthly.deductprofit.simple.rate <- apply(delimitvalue.monthly.dedu
 
 ```
 
+```{r}
+# write.csv(delimitvalue.monthly.deductprofit.simple.rate, "dedu.csv")
+```
 
 
 ```{r}

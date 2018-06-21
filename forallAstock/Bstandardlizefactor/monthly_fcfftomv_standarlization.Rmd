@@ -1,0 +1,99 @@
+---
+title: "Quant"
+author: "Wu Wei"
+date: "2018-1-25"
+output: html_document
+---
+
+
+
+## Library input
+```{r}
+rm(list = ls())
+
+suppressMessages(library(lubridate))
+suppressMessages(library(caret))
+suppressMessages(library(plyr))
+
+library(sca)
+
+```
+
+## Data Input
+
+```{r}
+monthly.fcfftomv <- 
+        read.csv("D:\\MyR\\quantprog\\forallAstock\\Acollectdata\\monthly.fcfftomv.csv", 
+                                      stringsAsFactors = FALSE)
+
+
+```
+
+
+## Data Processing
+
+```{r}
+
+processed.monthly.fcfftomv <- monthly.fcfftomv[,-1]
+
+row.names(processed.monthly.fcfftomv) <- monthly.fcfftomv[,1]
+
+
+```
+
+
+```{r}
+
+delimitvalue.monthly.fcfftomv <- apply(processed.monthly.fcfftomv,2, function(x) {
+        median.value <- median(x, na.rm = TRUE)
+        md.sd <- median(abs(x - median.value), na.rm = TRUE)
+
+        # browser()
+        uplimit <- median.value + 3 * md.sd
+        lowlimit <- median.value - 3 * md.sd
+        x[x > uplimit] <- uplimit
+        x[x < lowlimit] <- lowlimit
+        return(x)
+})
+
+```
+
+
+
+```{r}
+### 两次去极值
+
+delimitvalue.monthly.fcfftomv <- apply(delimitvalue.monthly.fcfftomv, 2, function(x) {
+        median.value <- median(x, na.rm = TRUE)
+        md.sd <- median(abs(x - median.value), na.rm = TRUE)
+
+        # browser()
+        uplimit <- median.value + 3 * md.sd
+        lowlimit <- median.value - 3 * md.sd
+        x[x > uplimit] <- uplimit
+        x[x < lowlimit] <- lowlimit
+        return(x)
+})
+
+```
+
+
+
+```{r}
+preProcValues <- preProcess(delimitvalue.monthly.fcfftomv, method = c("center","scale"))
+
+standardlized.monthly.fcfftomv <- predict(preProcValues, delimitvalue.monthly.fcfftomv)
+
+standardlized.monthly.fcfftomv[is.na(standardlized.monthly.fcfftomv)] <- 0
+```
+
+
+
+```{r}
+
+write.csv(standardlized.monthly.fcfftomv, 
+          "standardlized.monthly.fcfftomv.csv")
+
+
+```
+

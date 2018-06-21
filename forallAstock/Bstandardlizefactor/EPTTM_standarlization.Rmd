@@ -1,0 +1,182 @@
+---
+title: "Quant"
+author: "Wu Wei"
+date: "2018-1-25"
+output: html_document
+---
+
+
+
+## Library input
+```{r}
+rm(list = ls())
+
+suppressMessages(library(lubridate))
+suppressMessages(library(caret))
+suppressMessages(library(plyr))
+
+library(sca)
+
+```
+
+## Data Input
+
+```{r}
+monthly.pettm.data <- 
+        read.csv("D:\\MyR\\quantprog\\forallAstock\\Acollectdata\\monthly.pettm.data.csv", 
+                               stringsAsFactors = FALSE)
+
+
+```
+
+
+## Data Processing
+
+```{r}
+# processed.monthly.pettm.data <- t(monthly.pettm.data[,-1])
+# 
+# pettm.column.names <- monthly.pettm.data$code
+# 
+# pettm.row.names <- colnames(monthly.pettm.data)[-(1:2)]
+# 
+# processed.monthly.pettm.data <- processed.monthly.pettm.data[-1,]
+# 
+# processed.monthly.pettm.data <- array(as.numeric(processed.monthly.pettm.data),
+#                                       dim = dim(processed.monthly.pettm.data))
+# 
+# colnames(processed.monthly.pettm.data) <- pettm.column.names
+# 
+# row.names(processed.monthly.pettm.data) <- pettm.row.names
+# 
+# ####delete the data of 2018-1
+# processed.monthly.pettm.data <- processed.monthly.pettm.data[-nrow(processed.monthly.pettm.data),]
+
+
+```
+
+```{r}
+processed.monthly.epttm.data <- monthly.pettm.data[,-1]
+
+row.names(processed.monthly.epttm.data) <- monthly.pettm.data$code
+
+```
+
+
+```{r}
+processed.monthly.epttm.data <- processed.monthly.epttm.data[,-1]
+```
+
+```{r}
+processed.monthly.epttm.data <- as.matrix(processed.monthly.epttm.data)
+
+processed.monthly.epttm.data <- 1 / processed.monthly.epttm.data
+```
+
+```{r}
+hist(processed.monthly.epttm.data[,1])
+hist(processed.monthly.epttm.data[,100])
+```
+
+
+
+```{r}
+
+
+# delimitvalue.monthly.epttm.data <- apply(processed.monthly.epttm.data, 2, function(x) {
+#         median.value <- median(x, na.rm = TRUE)
+#         md.sd <- median(abs(x - median.value), na.rm = TRUE)
+#         
+#         # browser()
+#         uplimit <- median.value + 3 * md.sd
+#         lowlimit <- median.value - 3 * md.sd
+#         x[x > uplimit] <- uplimit
+#         x[x < lowlimit] <- lowlimit
+#         return(x)
+# })
+
+```
+
+```{r}
+# hist(delimitvalue.monthly.epttm.data[,1])
+# hist(delimitvalue.monthly.epttm.data[,100])
+```
+
+
+```{r}
+
+
+delimitvalue.monthly.epttm.data <- apply(processed.monthly.epttm.data, 2, function(x) {
+        median.value <- median(x, na.rm = TRUE)
+        md.sd <- median(abs(x - median.value), na.rm = TRUE)
+        
+        # browser()
+        uplimit <- median.value + 5 * md.sd
+        lowlimit <- median.value - 5 * md.sd
+        x[x > uplimit] <- uplimit
+        x[x < lowlimit] <- lowlimit
+        return(x)
+})
+
+```
+
+```{r}
+hist(delimitvalue.monthly.epttm.data[,1])
+hist(delimitvalue.monthly.epttm.data[,100])
+```
+
+
+
+
+```{r}
+
+
+# delimitvalue.monthly.epttm.data <- apply(delimitvalue.monthly.epttm.data, 2, function(x) {
+#         median.value <- median(x, na.rm = TRUE)
+#         md.sd <- median(abs(x - median.value), na.rm = TRUE)
+#         
+#         # browser()
+#         uplimit <- median.value + 3 * md.sd
+#         lowlimit <- median.value - 3 * md.sd
+#         x[x > uplimit] <- uplimit
+#         x[x < lowlimit] <- lowlimit
+#         return(x)
+# })
+
+```
+
+```{r}
+# hist(delimitvalue.monthly.epttm.data[,1])
+# hist(delimitvalue.monthly.epttm.data[,100])
+```
+
+
+```{r}
+preProcValues <- preProcess(delimitvalue.monthly.epttm.data, method = c("center","scale"))
+
+standardlized.monthly.epttm.data <- predict(preProcValues, delimitvalue.monthly.epttm.data)
+```
+
+```{r}
+hist(standardlized.monthly.epttm.data[,1])
+hist(standardlized.monthly.epttm.data[,100])
+```
+
+```{r}
+
+standardlized.monthly.epttm.data[is.na(standardlized.monthly.epttm.data)] <- 0
+```
+
+```{r}
+hist(standardlized.monthly.epttm.data[,1])
+hist(standardlized.monthly.epttm.data[,100])
+```
+
+
+```{r}
+
+write.csv(standardlized.monthly.epttm.data, 
+          "standardlized.monthly.epttm.data.csv")
+
+
+```
+

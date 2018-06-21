@@ -1,0 +1,99 @@
+---
+title: "Quant"
+author: "Wu Wei"
+date: "2018-1-25"
+output: html_document
+---
+
+
+
+## Library input
+```{r}
+rm(list = ls())
+
+suppressMessages(library(lubridate))
+suppressMessages(library(caret))
+suppressMessages(library(plyr))
+
+library(sca)
+
+```
+
+## Data Input
+
+```{r}
+monthly.momentum.3month <- 
+        read.csv("D:\\MyR\\quantprog\\forallAstock\\Acollectdata\\monthly.momentum.3month.csv", 
+                                      stringsAsFactors = FALSE)
+
+
+```
+
+
+## Data Processing
+
+```{r}
+
+processed.monthly.momentum.3month <- monthly.momentum.3month[,-1]
+
+row.names(processed.monthly.momentum.3month) <- monthly.momentum.3month[,1]
+
+
+```
+
+
+```{r}
+
+delimitvalue.monthly.momentum.3month <- apply(processed.monthly.momentum.3month,2, function(x) {
+        median.value <- median(x, na.rm = TRUE)
+        md.sd <- median(abs(x - median.value), na.rm = TRUE)
+
+        # browser()
+        uplimit <- median.value + 3 * md.sd
+        lowlimit <- median.value - 3 * md.sd
+        x[x > uplimit] <- uplimit
+        x[x < lowlimit] <- lowlimit
+        return(x)
+})
+
+```
+
+
+
+```{r}
+### 两次去极值
+
+delimitvalue.monthly.momentum.3month <- apply(delimitvalue.monthly.momentum.3month, 2, function(x) {
+        median.value <- median(x, na.rm = TRUE)
+        md.sd <- median(abs(x - median.value), na.rm = TRUE)
+
+        # browser()
+        uplimit <- median.value + 3 * md.sd
+        lowlimit <- median.value - 3 * md.sd
+        x[x > uplimit] <- uplimit
+        x[x < lowlimit] <- lowlimit
+        return(x)
+})
+
+```
+
+
+
+```{r}
+preProcValues <- preProcess(delimitvalue.monthly.momentum.3month, method = c("center","scale"))
+
+standardlized.monthly.momentum.3month <- predict(preProcValues, delimitvalue.monthly.momentum.3month)
+
+standardlized.monthly.momentum.3month[is.na(standardlized.monthly.momentum.3month)] <- 0
+```
+
+
+
+```{r}
+
+write.csv(standardlized.monthly.momentum.3month, 
+          "standardlized.monthly.momentum.3month.csv")
+
+
+```
+

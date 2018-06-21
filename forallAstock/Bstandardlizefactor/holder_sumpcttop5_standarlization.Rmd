@@ -22,10 +22,13 @@ library(sca)
 ## Data Input
 
 ```{r}
-monthly.holder.sumpcttop5 <- 
-        read.csv("D:\\MyR\\quantprog\\forallAstock\\Acollectdata\\monthly.holder.sumpcttop5.csv", 
-                                      stringsAsFactors = FALSE)
+# monthly.holder.sumpcttop5 <- 
+#         read.csv("D:\\MyR\\quantprog\\forallAstock\\Acollectdata\\monthly.holder.sumpcttop5.csv", 
+#                                       stringsAsFactors = FALSE)
 
+monthly.holder.sumpcttop5 <-
+        read.csv("D:\\MyR\\quantprog\\forallAstock\\BAcleandata\\processed.monthly.holder.sumpcttop5.csv",
+                                      stringsAsFactors = FALSE)
 
 ```
 

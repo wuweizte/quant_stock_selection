@@ -24,7 +24,7 @@ library(sca)
 ```{r}
 
 monthly.roe.data <- 
-        read.csv("D:\\MyR\\quantprog\\forallAstock\\Acollectdata\\monthly.roe.data.csv", 
+        read.csv("D:\\MyR\\quantprog\\forallAstock\\BAcleandataforNAindustry\\processed.monthly.roe.data.csv", 
                              stringsAsFactors = FALSE)
 
 
