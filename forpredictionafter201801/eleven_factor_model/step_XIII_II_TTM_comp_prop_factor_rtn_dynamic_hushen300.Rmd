@@ -1,0 +1,106 @@
+---
+title: "11 factors"
+author: "Wu Wei"
+date: "2018-5-16"
+output: html_document
+---
+
+
+
+## Library and source file input
+```{r}
+rm(list = ls())
+
+suppressMessages(library(lubridate))
+suppressMessages(library(caret))
+suppressMessages(library(plyr))
+
+library(sca)
+library(forecast)
+library(Rdonlp2)
+
+```
+
+```{r}
+# source("D:\\MyR\\quantprog\\forAstockbefore20150930\\Jdynamiccovmatrixprediction\\seven_factor_24m_comparison\\ComputeCompPropComplyingWithHushen300.R")
+
+source("D:\\MyR\\quantprog\\forAstockbefore20150930\\Jdynamiccovmatrixprediction\\seven_factor_24m_comparison\\ComputeCompPropDynamicHS300.R")
+```
+
+
+## Data Input
+```{r}
+
+load("D:\\MyR\\quantprog\\forallAstock\\Acollectdata\\stock.code.name")
+
+load("result.investion.target.145")
+
+load("stock.cov.matrix.list")
+```
+
+
+## Proportion computation
+
+```{r}
+initial.comp <- result.investion.target.145
+```
+
+
+```{r}
+load("D:\\MyR\\quantprog\\forallAstock\\AcollectdataafterJan2018\\all.industry.prop.list")
+
+monthly.industry.data <- 
+        read.csv("D:\\MyR\\quantprog\\forpredictionafter201801\\BAcleandataforNAindustry\\processed.monthly.industry.data.csv", 
+                 stringsAsFactors = FALSE)
+```
+
+```{r}
+
+
+
+
+com.prop.list <- list()
+
+system.time(
+        
+        for(i in 1:ncol(initial.comp)){
+        
+        # for(i in ncol(initial.comp):ncol(initial.comp)){
+                
+                stock.limited <- initial.comp[,i]
+                
+                stock.cov.matrix <- stock.cov.matrix.list[[i]]
+                
+                tdate <- names(stock.cov.matrix.list)[i]
+                
+                stock.cov.matrix.limited <- stock.cov.matrix[row.names(stock.cov.matrix) %in% stock.limited,
+                                                             colnames(stock.cov.matrix) %in% stock.limited]
+                
+                # com.prop.list[[colnames(initial.comp)[i]]] <- ComputeCompPropComplyingWithHushen300(stock.limited,
+                #                                                               stock.cov.matrix.limited,
+                #                                                               stock.code.name)
+
+                com.prop.list[[colnames(initial.comp)[i]]] <- ComputeCompPropDynamicHS300(stock.limited,
+                                                                                          stock.cov.matrix.limited,
+                                                                                          stock.code.name,
+                                                                                          tdate,
+                                                                                          all.industry.prop.list,
+                                                                                          monthly.industry.data)
+                
+                
+        }
+        
+)
+
+
+
+```
+
+
+
+```{r}
+save(com.prop.list, file = "step.XIII.II.com.prop.list")
+```
+
+
+

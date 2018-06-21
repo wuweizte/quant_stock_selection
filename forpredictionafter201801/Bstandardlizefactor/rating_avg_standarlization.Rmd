@@ -1,0 +1,114 @@
+---
+title: "Quant"
+author: "Wu Wei"
+date: "2018-5-22"
+output: html_document
+---
+
+
+
+## Library input
+```{r}
+rm(list = ls())
+
+suppressMessages(library(lubridate))
+suppressMessages(library(caret))
+suppressMessages(library(plyr))
+
+library(sca)
+
+```
+
+## Data Input
+
+```{r}
+monthly.rating.avg <- 
+        read.csv("D:\\MyR\\quantprog\\forallAstock\\AcollectdataafterJan2018\\monthly.rating.avg.csv", 
+                                      stringsAsFactors = FALSE)
+
+
+```
+
+
+```{r}
+load("D:\\MyR\\quantprog\\forAstockbefore20120730\\BAcleandataforNAindustry\\stockcode")
+```
+
+
+## Data Processing
+
+```{r}
+
+processed.monthly.rating.avg <- monthly.rating.avg[,-1]
+
+
+row.names(processed.monthly.rating.avg) <- monthly.rating.avg[,1]
+
+####delete the data of 2018-1
+
+# processed.monthly.rating.avg <- processed.monthly.rating.avg[,-ncol(processed.monthly.rating.avg)]
+
+```
+
+```{r}
+processed.monthly.rating.avg <- 
+        processed.monthly.rating.avg[row.names(processed.monthly.rating.avg) %in% stockcode,]
+
+```
+
+
+```{r}
+
+delimitvalue.monthly.rating.avg <- apply(processed.monthly.rating.avg,2, function(x) {
+        median.value <- median(x, na.rm = TRUE)
+        md.sd <- median(abs(x - median.value), na.rm = TRUE)
+
+        # browser()
+        uplimit <- median.value + 3 * md.sd
+        lowlimit <- median.value - 3 * md.sd
+        x[x > uplimit] <- uplimit
+        x[x < lowlimit] <- lowlimit
+        return(x)
+})
+
+```
+
+
+
+```{r}
+### 两次去极值
+
+delimitvalue.monthly.rating.avg <- apply(delimitvalue.monthly.rating.avg, 2, function(x) {
+        median.value <- median(x, na.rm = TRUE)
+        md.sd <- median(abs(x - median.value), na.rm = TRUE)
+
+        # browser()
+        uplimit <- median.value + 3 * md.sd
+        lowlimit <- median.value - 3 * md.sd
+        x[x > uplimit] <- uplimit
+        x[x < lowlimit] <- lowlimit
+        return(x)
+})
+
+```
+
+
+
+```{r}
+preProcValues <- preProcess(delimitvalue.monthly.rating.avg, method = c("center","scale"))
+
+standardlized.monthly.rating.avg <- predict(preProcValues, delimitvalue.monthly.rating.avg)
+
+standardlized.monthly.rating.avg[is.na(standardlized.monthly.rating.avg)] <- 0
+```
+
+
+
+```{r}
+
+write.csv(standardlized.monthly.rating.avg, 
+          "standardlized.monthly.rating.avg.csv")
+
+
+```
+

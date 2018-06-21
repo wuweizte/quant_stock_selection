@@ -1,0 +1,111 @@
+---
+title: "Quant"
+author: "Wu Wei"
+date: "2018-1-25"
+output: html_document
+---
+
+
+
+## Library input
+```{r}
+rm(list = ls())
+
+suppressMessages(library(lubridate))
+suppressMessages(library(caret))
+suppressMessages(library(plyr))
+
+library(sca)
+
+```
+
+## Data Input
+
+```{r}
+monthly.momentum.12month <- 
+        read.csv("D:\\MyR\\quantprog\\forallAstock\\AcollectdataafterJan2018\\monthly.momentum.12month.csv", 
+                                      stringsAsFactors = FALSE)
+
+
+```
+
+
+```{r}
+load("D:\\MyR\\quantprog\\forAstockbefore20120730\\BAcleandataforNAindustry\\stockcode")
+```
+
+## Data Processing
+
+```{r}
+
+processed.monthly.momentum.12month <- monthly.momentum.12month[,-1]
+
+row.names(processed.monthly.momentum.12month) <- monthly.momentum.12month[,1]
+
+
+```
+
+
+```{r}
+processed.monthly.momentum.12month <- 
+        processed.monthly.momentum.12month[row.names(processed.monthly.momentum.12month) %in% stockcode,]
+
+```
+
+
+
+```{r}
+
+delimitvalue.monthly.momentum.12month <- apply(processed.monthly.momentum.12month,2, function(x) {
+        median.value <- median(x, na.rm = TRUE)
+        md.sd <- median(abs(x - median.value), na.rm = TRUE)
+
+        # browser()
+        uplimit <- median.value + 3 * md.sd
+        lowlimit <- median.value - 3 * md.sd
+        x[x > uplimit] <- uplimit
+        x[x < lowlimit] <- lowlimit
+        return(x)
+})
+
+```
+
+
+
+```{r}
+### 两次去极值
+
+delimitvalue.monthly.momentum.12month <- apply(delimitvalue.monthly.momentum.12month, 2, function(x) {
+        median.value <- median(x, na.rm = TRUE)
+        md.sd <- median(abs(x - median.value), na.rm = TRUE)
+
+        # browser()
+        uplimit <- median.value + 3 * md.sd
+        lowlimit <- median.value - 3 * md.sd
+        x[x > uplimit] <- uplimit
+        x[x < lowlimit] <- lowlimit
+        return(x)
+})
+
+```
+
+
+
+```{r}
+preProcValues <- preProcess(delimitvalue.monthly.momentum.12month, method = c("center","scale"))
+
+standardlized.monthly.momentum.12month <- predict(preProcValues, delimitvalue.monthly.momentum.12month)
+
+standardlized.monthly.momentum.12month[is.na(standardlized.monthly.momentum.12month)] <- 0
+```
+
+
+
+```{r}
+
+write.csv(standardlized.monthly.momentum.12month, 
+          "standardlized.monthly.momentum.12month.csv")
+
+
+```
+

@@ -1,0 +1,116 @@
+---
+title: "Quant"
+author: "Wu Wei"
+date: "2018-5-22"
+output: html_document
+---
+
+
+
+## Library input
+```{r}
+rm(list = ls())
+
+suppressMessages(library(lubridate))
+suppressMessages(library(caret))
+suppressMessages(library(plyr))
+
+library(sca)
+
+```
+
+## Data Input
+
+```{r}
+
+monthly.roe.data <- 
+        read.csv("D:\\MyR\\quantprog\\forpredictionafter201801\\BAcleandataforNAindustry\\processed.monthly.roe.data.csv", 
+                             stringsAsFactors = FALSE)
+
+
+```
+
+```{r}
+load("D:\\MyR\\quantprog\\forAstockbefore20120730\\BAcleandataforNAindustry\\stockcode")
+```
+
+
+## Data Processing
+
+```{r}
+# processed.monthly.roe.data <- t(monthly.roe.data[,-c(1,ncol(monthly.roe.data))])
+processed.monthly.roe.data <- t(monthly.roe.data[,-1])
+
+roe.data.column.names <- monthly.roe.data[,1]
+
+# roe.data.row.names <- colnames(monthly.roe.data)[-c(1, length(monthly.roe.data))]
+roe.data.row.names <- colnames(monthly.roe.data)[-1]
+
+
+processed.monthly.roe.data <- array(as.numeric(processed.monthly.roe.data),
+                                      dim = dim(processed.monthly.roe.data))
+
+colnames(processed.monthly.roe.data) <- roe.data.column.names
+
+row.names(processed.monthly.roe.data) <- roe.data.row.names
+
+####delete the data of 2018-1
+# processed.monthly.roe.data <- processed.monthly.roe.data[-nrow(processed.monthly.roe.data),]
+
+```
+
+```{r}
+processed.monthly.roe.data <- processed.monthly.roe.data[,colnames(processed.monthly.roe.data) %in% stockcode]
+```
+
+
+```{r}
+
+delimitvalue.monthly.roe.data <- apply(processed.monthly.roe.data, 1, function(x) {
+        median.value <- median(x, na.rm = TRUE)
+        md.sd <- median(abs(x - median.value), na.rm = TRUE)
+        
+        # browser()
+        uplimit <- median.value + 3 * md.sd
+        lowlimit <- median.value - 3 * md.sd
+        x[x > uplimit] <- uplimit
+        x[x < lowlimit] <- lowlimit
+        return(x)
+})
+
+```
+
+```{r}
+
+delimitvalue.monthly.roe.data <- apply(delimitvalue.monthly.roe.data, 2, function(x) {
+        median.value <- median(x, na.rm = TRUE)
+        md.sd <- median(abs(x - median.value), na.rm = TRUE)
+        
+        # browser()
+        uplimit <- median.value + 3 * md.sd
+        lowlimit <- median.value - 3 * md.sd
+        x[x > uplimit] <- uplimit
+        x[x < lowlimit] <- lowlimit
+        return(x)
+})
+
+```
+
+
+```{r}
+preProcValues <- preProcess(delimitvalue.monthly.roe.data, method = c("center","scale"))
+
+standardlized.monthly.roe.data <- predict(preProcValues, delimitvalue.monthly.roe.data)
+
+standardlized.monthly.roe.data[is.na(standardlized.monthly.roe.data)] <- 0
+```
+
+
+
+
+```{r}
+write.csv(standardlized.monthly.roe.data, "standardlized.monthly.roe.data.csv")
+
+
+```
+

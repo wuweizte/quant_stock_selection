@@ -1,0 +1,93 @@
+---
+title: "Quant"
+author: "Wu Wei"
+date: "2018-1-25"
+output: html_document
+---
+
+
+
+## Library input
+```{r}
+rm(list = ls())
+
+suppressMessages(library(lubridate))
+suppressMessages(library(caret))
+suppressMessages(library(plyr))
+
+library(sca)
+
+```
+
+## Data Input
+
+
+```{r}
+original.price.data <- 
+        read.csv("D:\\MyR\\quantprog\\forallAstock\\AcollectdataafterJan2018\\originaldata\\original.price.data.csv", 
+                                      stringsAsFactors = FALSE)
+
+
+```
+
+
+```{r}
+load("D:\\MyR\\quantprog\\forAstockbefore20120730\\BAcleandataforNAindustry\\stockcode")
+```
+
+
+## Data Processing
+
+```{r}
+row.names(original.price.data) <- original.price.data$X
+
+original.price.data <- original.price.data[,-1]
+
+
+```
+
+```{r}
+original.price.data <- 
+        original.price.data[row.names(original.price.data) %in% stockcode,]
+
+```
+
+
+```{r}
+monthly.price.data <- t(original.price.data)
+
+monthly.price.data <- diff(log(monthly.price.data))
+
+
+```
+
+```{r}
+monthly.price.data <- monthly.price.data[-c(1:12),]
+```
+
+```{r}
+t.monthly.price.data <- t(monthly.price.data)
+```
+
+
+
+
+
+```{r}
+preProcValues <- preProcess(t.monthly.price.data, method = c("center"))
+
+standardlized.monthly.price <- predict(preProcValues, t.monthly.price.data)
+
+standardlized.monthly.price[is.na(standardlized.monthly.price)] <- 0
+```
+
+
+
+```{r}
+
+write.csv(t(standardlized.monthly.price), 
+          "standardlized.monthly.price.csv")
+
+
+```
+

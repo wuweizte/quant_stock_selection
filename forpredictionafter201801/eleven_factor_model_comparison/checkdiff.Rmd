@@ -1,0 +1,87 @@
+```{r}
+###########
+rm(list = ls())
+
+load("comparison.F.hat.g")
+new.comparison.F.hat.g <- result.F.hat.g
+
+load("D:\\MyR\\quantprog\\forAstockbefore20120730\\eleven_factor_model\\comparison.F.hat.g")
+old.comparison.F.hat.g <- result.F.hat.g
+
+```
+
+```{r}
+
+
+rm(list = ls())
+
+new.standardlized.monthly.epttm.data <- 
+        read.csv(
+                "D:\\MyR\\quantprog\\forpredictionafter201801\\Bstandardlizefactor\\standardlized.monthly.epttm.data.csv", 
+                stringsAsFactors = FALSE)
+
+old.standardlized.monthly.epttm.data <- 
+        read.csv(
+                "D:\\MyR\\quantprog\\forAstockbefore20120730\\Bstandardlizefactor\\standardlized.monthly.epttm.data.csv", 
+                stringsAsFactors = FALSE)
+
+
+View(cbind(new.standardlized.monthly.epttm.data[,1], old.standardlized.monthly.epttm.data[,1]))
+View(cbind(new.standardlized.monthly.epttm.data[,2], old.standardlized.monthly.epttm.data[,2]))
+
+```
+
+```{r}
+rm(list = ls())
+
+new.standardlized.monthly.price <- 
+        read.csv("D:\\MyR\\quantprog\\forpredictionafter201801\\Bstandardlizefactor\\standardlized.monthly.price.csv", 
+                 stringsAsFactors = FALSE)
+
+
+old.standardlized.monthly.price <- 
+        read.csv("D:\\MyR\\quantprog\\forAstockbefore20120730\\Bstandardlizefactor\\standardlized.monthly.price.csv", 
+                 stringsAsFactors = FALSE)
+
+View(rbind(new.standardlized.monthly.price[2,], old.standardlized.monthly.price[2,]))
+```
+
+```{r}
+rm(list = ls())
+
+new.standardlized.monthly.tech.turnoverrate60 <- 
+        read.csv(
+        "D:\\MyR\\quantprog\\forpredictionafter201801\\Bstandardlizefactor\\standardlized.monthly.tech.turnoverrate60.csv", 
+        stringsAsFactors = FALSE)
+
+
+
+old.standardlized.monthly.tech.turnoverrate60 <- 
+        read.csv(
+        "D:\\MyR\\quantprog\\forAstockbefore20120730\\Bstandardlizefactor\\standardlized.monthly.tech.turnoverrate60.csv", 
+        stringsAsFactors = FALSE)
+
+View(cbind(new.standardlized.monthly.tech.turnoverrate60[,2], old.standardlized.monthly.tech.turnoverrate60[,2]))
+
+all.equal(new.standardlized.monthly.tech.turnoverrate60[,2], old.standardlized.monthly.tech.turnoverrate60[,2])
+```
+
+```{r}
+rm(list = ls())
+
+new.standardlized.monthly.tech.turnoverrate60 <- 
+        read.csv(
+        "D:\\MyR\\quantprog\\forpredictionafter201801\\Bstandardlizefactor\\standardlized.monthly.tech.turnoverrate60.csv", 
+        stringsAsFactors = FALSE)
+
+
+
+old.standardlized.monthly.tech.turnoverrate60 <- 
+        read.csv(
+        "D:\\MyR\\quantprog\\forAstockbefore20120730\\Bstandardlizefactor\\standardlized.monthly.tech.turnoverrate60.csv", 
+        stringsAsFactors = FALSE)
+
+View(cbind(new.standardlized.monthly.tech.turnoverrate60[,2], old.standardlized.monthly.tech.turnoverrate60[,2]))
+
+all.equal(new.standardlized.monthly.tech.turnoverrate60[,2], old.standardlized.monthly.tech.turnoverrate60[,2])
+```
