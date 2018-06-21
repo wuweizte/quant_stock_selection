@@ -1,0 +1,359 @@
+---
+title: "11 factor rtn"
+author: "Wu Wei"
+date: "2018-5-23"
+output: html_document
+---
+
+
+
+## Library input
+```{r}
+rm(list = ls())
+
+suppressMessages(library(lubridate))
+suppressMessages(library(caret))
+suppressMessages(library(plyr))
+
+library(sca)
+library(forecast)
+
+```
+
+## Data Input
+
+```{r}
+
+monthly.price.data <- read.csv("D:\\MyR\\quantprog\\forallAstock\\Acollectdata\\monthly.price.data.csv",
+                               stringsAsFactors = FALSE)
+
+hushen300.price <- read.csv("D:\\MyR\\quantprog\\forallAstock\\Acollectdata\\hushen300.monthly.price.csv",
+                               stringsAsFactors = FALSE)
+
+monthly.momentum.12month <- 
+        read.csv("D:\\MyR\\quantprog\\forallAstock\\Acollectdata\\monthly.momentum.12month.csv", 
+                                      stringsAsFactors = FALSE)
+
+monthly.momentum.3month <- 
+        read.csv("D:\\MyR\\quantprog\\forallAstock\\Acollectdata\\monthly.momentum.3month.csv", 
+                                      stringsAsFactors = FALSE)
+
+monthly.momentum.6month <- 
+        read.csv("D:\\MyR\\quantprog\\forallAstock\\Acollectdata\\monthly.momentum.6month.csv", 
+                                      stringsAsFactors = FALSE)
+```
+
+
+```{r}
+load("step.XIII.II.com.prop.list")
+```
+
+
+
+## Data Processing
+
+```{r}
+
+### let the starting point to be same in different forecast.period
+# training.set.endpoint <- nrow(monthly.price.data) - comparison.period - 4
+
+forecast.period <- 1
+comparison.period <- 61
+
+training.set.endpoint <- nrow(monthly.price.data) - comparison.period - forecast.period
+```
+
+
+
+```{r}
+comparison.list <- list()
+
+for(i in 1:comparison.period){
+        
+# for(i in 1:1){
+        
+        # for(i in comparison.period:comparison.period){
+        
+        com.prop <- com.prop.list[[i]]
+        
+        index <- training.set.endpoint + i
+        
+        specified.stock.return <- as.matrix(monthly.price.data[(index + (1:forecast.period)), colnames(monthly.price.data) %in% 
+                                                                       paste0("X",com.prop$code)])
+        
+        selected.stocks.actual.return <- specified.stock.return  %*%  cbind(com.prop$prop/100)
+        
+        com.prop <- cbind(com.prop, t(specified.stock.return))
+        
+        com.prop.list[[i]] <- com.prop
+        
+        hushen300.return <- hushen300.price[(index + (1:forecast.period)), 2]
+        
+        comparison.list[[names(com.prop.list)[i]]] <- data.frame(selected.stocks.actual.return,hushen300.return)
+}
+```
+
+
+```{r}
+# lapply(comparison.list, function(x){
+#         # browser()
+#         apply(x,2,mean)
+# })
+```
+
+```{r}
+result.comparison <- sapply(comparison.list, function(x){
+        # browser()
+        apply(x,2,mean)
+})
+
+result.comparison <- round(t(result.comparison) * 100, digits = 2)
+
+print(result.comparison)
+
+mean(result.comparison[,1] > result.comparison[,2]) * 100
+
+```
+
+
+```{r}
+
+apply(head(result.comparison,12),2,sum)
+
+```
+
+```{r , fig.height=6, fig.width=11, echo=FALSE}
+
+selected.stock.cum.return <- cumsum(result.comparison[1:12,1])
+hushen300.cum.return <- cumsum(result.comparison[1:12,2])
+
+ylim.min <- min(selected.stock.cum.return, hushen300.cum.return)
+ylim.max <- max(selected.stock.cum.return, hushen300.cum.return)
+
+plot(selected.stock.cum.return,type = "o",col = "red",axes = FALSE,ylim = c(ylim.min,ylim.max))
+lines(hushen300.cum.return,type = "o",col = "blue")
+
+axis(1, at = 1:12, labels = paste0("2013-",1:12))
+
+axis(2,las = 1)
+
+legend("topleft",
+       legend = c("模型选择的股票组合","沪深300"),
+       col = c("red",'blue'),
+       lty = 1,
+       ncol = 3,
+       bty = "n"
+)
+
+box()
+
+```
+```{r}
+log.return.2013 <- monthly.momentum.12month$d20131231
+
+log.return.2013 <- log.return.2013[!is.na(log.return.2013)]
+
+hist(log.return.2013, probability = FALSE)
+
+quantile(log.return.2013, probs = seq(0,1,0.1))
+```
+
+```{r}
+apply(result.comparison[13:24,],2,sum)
+```
+
+```{r , fig.height=6, fig.width=11, echo=FALSE}
+
+selected.stock.cum.return <- cumsum(result.comparison[13:24,1])
+hushen300.cum.return <- cumsum(result.comparison[13:24,2])
+
+ylim.min <- min(selected.stock.cum.return, hushen300.cum.return)
+ylim.max <- max(selected.stock.cum.return, hushen300.cum.return)
+
+plot(selected.stock.cum.return,type = "o",col = "red",axes = FALSE,ylim = c(ylim.min,ylim.max))
+lines(hushen300.cum.return,type = "o",col = "blue")
+
+axis(1, at = 1:12, labels = paste0("2014-",1:12))
+
+axis(2,las = 1)
+
+legend("topleft",
+       legend = c("模型选择的股票组合","沪深300"),
+       col = c("red",'blue'),
+       lty = 1,
+       ncol = 3,
+       bty = "n"
+)
+
+box()
+
+```
+
+```{r}
+log.return.2014 <- monthly.momentum.12month$d20141231
+
+log.return.2014 <- log.return.2014[!is.na(log.return.2014)]
+
+hist(log.return.2014, probability = FALSE)
+
+quantile(log.return.2014, probs = seq(0,1,0.1))
+```
+
+```{r }
+apply(result.comparison[25:36,],2,sum)
+
+```
+
+```{r , fig.height=6, fig.width=11, echo=FALSE}
+
+selected.stock.cum.return <- cumsum(result.comparison[25:36,1])
+hushen300.cum.return <- cumsum(result.comparison[25:36,2])
+
+ylim.min <- min(selected.stock.cum.return, hushen300.cum.return)
+ylim.max <- max(selected.stock.cum.return, hushen300.cum.return)
+
+plot(selected.stock.cum.return,type = "o",col = "red",axes = FALSE,ylim = c(ylim.min,ylim.max))
+lines(hushen300.cum.return,type = "o",col = "blue")
+
+axis(1, at = 1:12, labels = paste0("2015-",1:12))
+
+axis(2,las = 1)
+
+legend("topleft",
+       legend = c("模型选择的股票组合","沪深300"),
+       col = c("red",'blue'),
+       lty = 1,
+       ncol = 3,
+       bty = "n"
+)
+
+box()
+
+```
+
+```{r}
+log.return.2015 <- monthly.momentum.12month$d20151231
+
+log.return.2015 <- log.return.2015[!is.na(log.return.2015)]
+
+hist(log.return.2015, probability = FALSE)
+
+quantile(log.return.2015, probs = seq(0,1,0.1))
+```
+
+```{r }
+apply(result.comparison[37:48,],2,sum)
+
+```
+
+```{r , fig.height=6, fig.width=11, echo=FALSE}
+
+selected.stock.cum.return <- cumsum(result.comparison[37:48,1])
+hushen300.cum.return <- cumsum(result.comparison[37:48,2])
+
+ylim.min <- min(selected.stock.cum.return, hushen300.cum.return)
+ylim.max <- max(selected.stock.cum.return, hushen300.cum.return)
+
+plot(selected.stock.cum.return,type = "o",col = "red",axes = FALSE,ylim = c(ylim.min,ylim.max))
+lines(hushen300.cum.return,type = "o",col = "blue")
+
+axis(1, at = 1:12, labels = paste0("2016-",1:12))
+
+axis(2,las = 1)
+
+legend("topleft",
+       legend = c("模型选择的股票组合","沪深300"),
+       col = c("red",'blue'),
+       lty = 1,
+       ncol = 3,
+       bty = "n"
+)
+
+box()
+
+```
+
+```{r}
+log.return.2016 <- monthly.momentum.12month$d20161230
+
+log.return.2016 <- log.return.2016[!is.na(log.return.2016)]
+
+hist(log.return.2016, probability = FALSE)
+
+quantile(log.return.2016, probs = seq(0,1,0.1))
+```
+
+```{r }
+apply(result.comparison[49:60,],2,sum)
+
+```
+
+```{r , fig.height=6, fig.width=11, echo=FALSE}
+
+selected.stock.cum.return <- cumsum(result.comparison[49:60,1])
+hushen300.cum.return <- cumsum(result.comparison[49:60,2])
+
+ylim.min <- min(selected.stock.cum.return, hushen300.cum.return)
+ylim.max <- max(selected.stock.cum.return, hushen300.cum.return)
+
+plot(selected.stock.cum.return,type = "o",col = "red",axes = FALSE,ylim = c(ylim.min,ylim.max))
+lines(hushen300.cum.return,type = "o",col = "blue")
+
+axis(1, at = 1:12, labels = paste0("2017-",1:12))
+
+axis(2,las = 1)
+
+legend("topleft",
+       legend = c("模型选择的股票组合","沪深300"),
+       col = c("red",'blue'),
+       lty = 1,
+       ncol = 3,
+       bty = "n"
+)
+
+box()
+
+```
+
+```{r}
+log.return.2017 <- monthly.momentum.12month$d20171229
+
+log.return.2017 <- log.return.2017[!is.na(log.return.2017)]
+
+hist(log.return.2017, probability = FALSE)
+
+plot(ecdf(log.return.2017))
+```
+
+```{r}
+
+quantile(log.return.2017, probs = seq(0,1,0.1))
+```
+
+```{r}
+log.return.2017.5 <- monthly.momentum.3month$d20170531
+
+log.return.2017.5 <- log.return.2017.5[!is.na(log.return.2017.5)]
+
+# hist(log.return.2017.5, probability = FALSE)
+
+quantile(log.return.2017.5, probs = seq(0,1,0.1))
+```
+
+```{r}
+log.return.2017.6 <- monthly.momentum.6month$d20170630
+
+log.return.2017.6 <- log.return.2017.6[!is.na(log.return.2017.6)]
+
+# hist(log.return.2017.6, probability = FALSE)
+
+quantile(log.return.2017.6, probs = seq(0,1,0.1))
+```
+
+```{r }
+apply(result.comparison,2,min)
+
+apply(result.comparison,2,sd)
+```
+
+

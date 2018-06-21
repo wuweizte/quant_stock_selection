@@ -95,7 +95,7 @@ monthly.trade.status <-
 
 
 ```{r}
-load("comparison.F.hat.g")
+load("D:\\MyR\\quantprog\\forAstockbefore20120730\\eleven_factor_model\\comparison.F.hat.g")
 
 
 load("D:\\MyR\\quantprog\\forallAstock\\Acollectdata\\stock.code.name")
@@ -120,7 +120,7 @@ training.set.endpoint <- nrow(t.result.F.hat.g) - comparison.period
 
 
 ```{r}
-source("D:\\MyR\\quantprog\\forAstockbefore20150930\\Jdynamiccovmatrixprediction\\eleven_factor_val_lnmv_ets_24m\\CreateFactorForecast24m.R")
+source("D:\\MyR\\quantprog\\forAstockbefore20140630\\eleven_factor_model_zf_close_riskvariance\\CreateFactorForecastCloseRiskVar.R")
 
 
 for(i in 1:comparison.period){
@@ -131,7 +131,7 @@ for(i in 1:comparison.period){
         
         index <- training.set.endpoint + i
         
-        factor.forecast <- CreateFactorForecast24m(head(t.result.F.hat.g, index))
+        factor.forecast <- CreateFactorForecastCloseRiskVar(head(t.result.F.hat.g, index))
         
 
         last.col <- index + 2
@@ -151,9 +151,9 @@ for(i in 1:comparison.period){
                          abcdefgh.momentum.3month = standardlized.monthly.momentum.3month[,last.col],
                          
                          abcdefgh.val.lnmv = standardlized.monthly.val.lnmv[,last.col],
-                         abcdefgh.dividendyield = standardlized.monthly.dividendyield[,(i + 1)],
-                         abcdefgh.holder.sumpcttop5 = standardlized.monthly.holder.sumpcttop5[,(i + 1)],
-                         abcdefgh.rating.avg = standardlized.monthly.rating.avg[,(i + 1)],
+                         abcdefgh.dividendyield = standardlized.monthly.dividendyield[,last.col],
+                         abcdefgh.holder.sumpcttop5 = standardlized.monthly.holder.sumpcttop5[,last.col],
+                         abcdefgh.rating.avg = standardlized.monthly.rating.avg[,last.col],
                          abcdefgh.roe = standardlized.monthly.roe.data[,last.col],
                          abcdefgh.risk.variance60 = standardlized.monthly.risk.variance60[,last.col]
                          )

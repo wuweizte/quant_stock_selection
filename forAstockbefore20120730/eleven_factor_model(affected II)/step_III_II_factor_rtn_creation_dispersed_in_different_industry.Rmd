@@ -1,0 +1,232 @@
+---
+title: "11 factors£¬20120730"
+author: "Wu Wei"
+date: "2018-5-22"
+output: html_document
+---
+
+
+
+## Library input
+```{r}
+rm(list = ls())
+
+suppressMessages(library(lubridate))
+suppressMessages(library(caret))
+suppressMessages(library(plyr))
+
+library(sca)
+library(forecast)
+
+```
+
+## Data Input
+
+```{r}
+
+monthly.industry.data <- 
+        read.csv("D:\\MyR\\quantprog\\forAstockbefore20120730\\BAcleandataforNAindustry\\processed.monthly.industry.data.csv", 
+                                  stringsAsFactors = FALSE)
+
+standardlized.monthly.epttm.data <- 
+        read.csv(
+        "D:\\MyR\\quantprog\\forAstockbefore20120730\\Bstandardlizefactor\\standardlized.monthly.epttm.data.csv", 
+        stringsAsFactors = FALSE)
+
+standardlized.monthly.tech.turnoverrate60 <- 
+        read.csv(
+        "D:\\MyR\\quantprog\\forAstockbefore20120730\\Bstandardlizefactor\\standardlized.monthly.tech.turnoverrate60.csv", 
+        stringsAsFactors = FALSE)
+
+standardlized.monthly.deductprofit.simple.rate <- 
+        read.csv(
+        "D:\\MyR\\quantprog\\forAstockbefore20120730\\Bstandardlizefactor\\standardlized.monthly.deductprofit.simple.rate.csv", 
+        stringsAsFactors = FALSE)
+
+standardlized.monthly.momentum.12month <- 
+        read.csv(
+        "D:\\MyR\\quantprog\\forAstockbefore20120730\\Bstandardlizefactor\\standardlized.monthly.momentum.12month.csv", 
+        stringsAsFactors = FALSE)
+
+standardlized.monthly.momentum.3month <- 
+        read.csv(
+        "D:\\MyR\\quantprog\\forAstockbefore20120730\\Bstandardlizefactor\\standardlized.monthly.momentum.3month.csv", 
+        stringsAsFactors = FALSE)
+
+
+standardlized.monthly.val.lnmv <- 
+        read.csv(
+        "D:\\MyR\\quantprog\\forAstockbefore20120730\\Bstandardlizefactor\\standardlized.monthly.val.lnmv.csv", 
+        stringsAsFactors = FALSE)
+
+standardlized.monthly.dividendyield <-
+        read.csv(
+        "D:\\MyR\\quantprog\\forAstockbefore20120730\\Bstandardlizefactor\\standardlized.monthly.dividendyield.csv",
+        stringsAsFactors = FALSE)
+
+standardlized.monthly.holder.sumpcttop5 <-
+        read.csv(
+        "D:\\MyR\\quantprog\\forAstockbefore20120730\\Bstandardlizefactor\\standardlized.monthly.holder.sumpcttop5.csv",
+        stringsAsFactors = FALSE)
+
+standardlized.monthly.rating.avg <-
+        read.csv(
+        "D:\\MyR\\quantprog\\forAstockbefore20120730\\Bstandardlizefactor\\standardlized.monthly.rating.avg.csv",
+        stringsAsFactors = FALSE)
+
+standardlized.monthly.roe.data <-
+        read.csv(
+        "D:\\MyR\\quantprog\\forAstockbefore20120730\\Bstandardlizefactor\\standardlized.monthly.roe.data.csv",
+        stringsAsFactors = FALSE)
+
+standardlized.monthly.risk.variance60 <-
+        read.csv(
+        "D:\\MyR\\quantprog\\forAstockbefore20120730\\Bstandardlizefactor\\standardlized.monthly.risk.variance60.csv",
+        stringsAsFactors = FALSE)
+
+
+monthly.trade.status <-
+        read.csv(
+        "D:\\MyR\\quantprog\\forallAstock\\Acollectdata\\monthly.trade.status.csv",
+        stringsAsFactors = FALSE)
+
+
+```
+
+
+```{r}
+load("comparison.F.hat.g")
+
+
+load("D:\\MyR\\quantprog\\forallAstock\\Acollectdata\\stock.code.name")
+```
+
+
+## Data Processing
+
+```{r}
+t.result.F.hat.g <- t(result.F.hat.g)
+
+```
+
+```{r}
+comparison.period <- 61
+
+forecast.period <- 1
+
+training.set.endpoint <- nrow(t.result.F.hat.g) - comparison.period
+
+```
+
+
+```{r}
+# source("D:\\MyR\\quantprog\\forAstockbefore20150930\\Jdynamiccovmatrixprediction\\eleven_factor_val_lnmv_ets_24m\\CreateFactorForecast24m.R")
+
+source("CreateFactorForecastmodifedforratingavg.R")
+
+
+for(i in 1:comparison.period){
+
+# for(i in 1:1){
+
+# for(i in comparison.period:comparison.period){
+        
+        index <- training.set.endpoint + i
+        
+        factor.forecast <- CreateFactorForecastmodifedforratingavg(head(t.result.F.hat.g, index))
+        
+
+        last.col <- index + 2
+        
+        # mainEffects <- dummyVars(as.formula(paste0(" ~ ", colnames(monthly.industry.data)[last.col])),
+        #                          data = monthly.industry.data[,c(1,last.col)])
+        # 
+        # ind.dum <- predict(mainEffects, monthly.industry.data[,c(1, last.col)])
+        
+        ind.dum <- NULL
+        
+        ind.dum <- cbind(ind.dum,
+                         abcdefgh.epttm = standardlized.monthly.epttm.data[,last.col],
+                         abcdefgh.turnoverrate60 = standardlized.monthly.tech.turnoverrate60[,last.col],
+                         abcdefgh.deductprofit.simple.rate = standardlized.monthly.deductprofit.simple.rate[,last.col],
+                         abcdefgh.momentum.12month = standardlized.monthly.momentum.12month[,last.col],
+                         abcdefgh.momentum.3month = standardlized.monthly.momentum.3month[,last.col],
+                         
+                         abcdefgh.val.lnmv = standardlized.monthly.val.lnmv[,last.col],
+                         abcdefgh.dividendyield = standardlized.monthly.dividendyield[,(i + 1)],
+                         abcdefgh.holder.sumpcttop5 = standardlized.monthly.holder.sumpcttop5[,(i + 1)],
+                         abcdefgh.rating.avg = standardlized.monthly.rating.avg[,(i + 1)],
+                         abcdefgh.roe = standardlized.monthly.roe.data[,last.col],
+                         abcdefgh.risk.variance60 = standardlized.monthly.risk.variance60[,last.col]
+                         )
+        
+        # stock.return.forecast <- ind.dum %*% cbind(factor.forecast)
+        
+        stock.return.forecast <- ind.dum %*% t(factor.forecast)
+        
+        row.names(stock.return.forecast) <- monthly.industry.data$code
+        return.forecast <- apply(stock.return.forecast, 1, sum)
+
+        ##########
+
+        df.return.with.industry <- data.frame(return = return.forecast, 
+                                              industry = monthly.industry.data[,last.col])
+        
+        df.return.with.industry <- df.return.with.industry[order(df.return.with.industry$industry, 
+                                                                 df.return.with.industry$return),]
+
+        ######
+        no.ting.pai.stock <- monthly.trade.status[monthly.trade.status[,last.col] == "½»Ò×", 1]
+
+        df.return.with.industry <- df.return.with.industry[row.names(df.return.with.industry) %in% no.ting.pai.stock,]
+        #######
+        
+        result.selection <- unlist(tapply(row.names(df.return.with.industry),
+                                          df.return.with.industry$industry,
+                                          tail, n = 5))
+        names(result.selection) <- NULL
+
+
+        ordered.return.forecast.145 <- result.selection[order(result.selection)]
+
+        if(i == 1){
+                result.investion.target.145 <- cbind(ordered.return.forecast.145)
+
+                result.investion.target.name.145 <-
+                        cbind(stock.code.name[substr(stock.code.name,1,9) %in% ordered.return.forecast.145])
+                
+                result.factor.forecast <- t(factor.forecast)
+
+        }else{
+                result.investion.target.145 <- cbind(result.investion.target.145, ordered.return.forecast.145)
+                
+                result.investion.target.name.145 <-
+                        cbind(result.investion.target.name.145,
+                              stock.code.name[substr(stock.code.name,1,9) %in% ordered.return.forecast.145])
+                
+                result.factor.forecast <- cbind(result.factor.forecast, t(factor.forecast))
+
+        }
+        
+}
+
+```
+
+```{r}
+
+colnames(result.investion.target.145) <- row.names(t.result.F.hat.g)[training.set.endpoint + (1:comparison.period)]
+
+colnames(result.investion.target.name.145) <- colnames(result.investion.target.145)
+
+colnames(result.factor.forecast) <- colnames(result.investion.target.145)
+```
+
+```{r}
+
+save(result.investion.target.145, file = "result.investion.target.145")
+save(result.investion.target.name.145, file = "result.investion.target.name.145")
+
+save(result.factor.forecast, file = "result.factor.forecast")
+```
+
+

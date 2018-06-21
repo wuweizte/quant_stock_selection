@@ -219,7 +219,7 @@ Dinv.hat <- diag(reciprocal.diagD.hat.o)
 
 
 ```{r}
-save(Dinv.hat, file = "comparison.Dinv.hat")
+# save(Dinv.hat, file = "comparison.Dinv.hat")
 ```
 
 ```{r}
