@@ -1,0 +1,107 @@
+---
+title: "Quant"
+author: "Wu Wei"
+date: "2018-1-25"
+output: html_document
+---
+
+
+
+## Library input
+```{r}
+rm(list = ls())
+
+suppressMessages(library(lubridate))
+suppressMessages(library(caret))
+
+suppressMessages(library(WindR))
+w.start()
+
+```
+
+## Data Input
+
+```{r}
+w_wset_data<-w.wset('sectorconstituent','date=2018-01-25;sectorid=a001010100000000')
+
+stockcode <- w_wset_data$Data$wind_code
+
+
+```
+
+
+```{r}
+
+w_tdays_data<-w.tdays("2017-12-1","2018-5-29","Period=M")
+
+tdate <- as.character(w_tdays_data$Data$DATETIME)
+
+tdate <- gsub("-","",tdate)
+```
+
+
+
+```{r}
+
+for(i in 1:length(tdate)){
+
+# for(i in 1:2){
+
+       tradedatepara <- paste0('tradeDate=', tdate[i])
+       w_wss_roe<-w.wss(stockcode,
+                         'fa_roenp_ttm',
+                         tradedatepara)
+ 
+
+        if(i == 1){
+                monthly.roe.data <- w_wss_roe$Data
+                
+        }else{
+
+                monthly.roe.data <- cbind(monthly.roe.data, 
+                                            w_wss_roe$Data$FA_ROENP_TTM)
+                
+                                
+        }
+
+
+}
+```
+
+
+
+
+
+
+```{r}
+colnames(monthly.roe.data) <- c("code", paste0("d",tdate))
+
+row.names(monthly.roe.data) <- stockcode
+
+```
+
+```{r}
+old.monthly.roe.data <- 
+        read.csv("D:\\MyR\\quantprog\\forallAstock\\Acollectdata\\monthly.roe.data.csv", 
+                                  stringsAsFactors = FALSE)
+```
+
+```{r}
+new.monthly.roe.data <- cbind(old.monthly.roe.data[,-ncol(old.monthly.roe.data)], monthly.roe.data[,-c(1:3)]) 
+```
+
+
+
+```{r}
+# monthly.roe.data <- monthly.roe.data[,-1]
+
+```
+
+
+
+```{r}
+write.csv(new.monthly.roe.data[,-1], "monthly.roe.data.csv")
+
+```
+
+

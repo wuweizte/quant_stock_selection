@@ -1,0 +1,58 @@
+---
+title: "Quant"
+author: "Wu Wei"
+date: "2018-1-25"
+output: html_document
+---
+
+
+
+## Library input
+```{r}
+rm(list = ls())
+
+suppressMessages(library(lubridate))
+suppressMessages(library(caret))
+
+suppressMessages(library(WindR))
+w.start()
+
+```
+
+## Data Input
+
+```{r}
+
+w_tdays_data<-w.tdays("2007-12-1","2018-5-29","Period=M")
+tdate <- as.character(w_tdays_data$Data$DATETIME)
+
+tdate <- gsub("-","",tdate)
+```
+
+
+```{r}
+w_wsd_hushen300<-w.wsd("000300.SH","close","2007-12-01","2018-5-29","Period=M;PriceAdj=F")
+
+hushen300.monthly.price <- w_wsd_hushen300$Data$CLOSE
+
+```
+
+
+```{r}
+hushen300.monthly.price <- cbind(diff(log(hushen300.monthly.price)))
+
+row.names(hushen300.monthly.price) <- paste0("d",tdate[-1])
+
+```
+
+
+
+```{r}
+
+write.csv(hushen300.monthly.price, "hushen300.monthly.price.csv")
+
+
+
+```
+
+

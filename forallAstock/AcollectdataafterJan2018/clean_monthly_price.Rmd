@@ -1,0 +1,67 @@
+---
+title: "Quant"
+author: "Wu Wei"
+date: "2018-1-25"
+output: html_document
+---
+
+
+
+## Library input
+```{r}
+rm(list = ls())
+
+suppressMessages(library(lubridate))
+suppressMessages(library(caret))
+
+
+```
+
+## Data Input
+
+
+```{r}
+original.price.data <- 
+        read.csv("originaldata\\original.price.data.csv", 
+                                      stringsAsFactors = FALSE)
+
+
+```
+
+
+## Data process
+```{r}
+row.names(original.price.data) <- original.price.data$X
+
+original.price.data <- original.price.data[,-1]
+
+```
+
+
+```{r}
+monthly.price.data <- original.price.data
+monthly.price.data <- t(monthly.price.data)
+
+monthly.price.data <- diff(log(monthly.price.data))
+
+# monthly.price.data[is.nan(monthly.price.data)] <- 0
+
+monthly.price.data[is.na(monthly.price.data)] <- 0
+```
+
+
+```{r}
+# monthly.price.data <- as.data.frame(monthly.price.data)
+```
+
+
+
+
+
+```{r}
+
+write.csv(monthly.price.data[-(1:12),], "monthly.price.data.csv")
+
+```
+
+

@@ -1,0 +1,100 @@
+---
+title: "Quant"
+author: "Wu Wei"
+date: "2018-1-25"
+output: html_document
+---
+
+
+
+## Library input
+```{r}
+rm(list = ls())
+
+suppressMessages(library(lubridate))
+suppressMessages(library(caret))
+
+suppressMessages(library(WindR))
+w.start()
+
+```
+
+## Data Input
+
+```{r}
+w_wset_data<-w.wset('sectorconstituent','date=2018-01-25;sectorid=a001010100000000')
+
+stockcode <- w_wset_data$Data$wind_code
+
+```
+
+
+```{r}
+
+w_tdays_data<-w.tdays("2017-12-1","2018-5-29","Period=M")
+
+tdate <- as.character(w_tdays_data$Data$DATETIME)
+
+tdate <- gsub("-","",tdate)
+```
+
+
+```{r}
+
+for(i in 1:length(tdate)){
+
+# for(i in 1:2){
+
+       tradedatepara <- paste0('tradeDate=', tdate[i])
+
+       w_wss_dividendyield<-w.wss(stockcode,'dividendyield2',tradedatepara)
+       
+        if(i == 1){
+                monthly.dividendyield <- w_wss_dividendyield$Data
+        }else{
+                monthly.dividendyield <- cbind(monthly.dividendyield, 
+                                            w_wss_dividendyield$Data$DIVIDENDYIELD2)
+                
+        }
+
+
+}
+```
+
+
+```{r}
+colnames(monthly.dividendyield) <- c("code", paste0("d",tdate))
+row.names(monthly.dividendyield) <- monthly.dividendyield[,"code"]
+
+```
+
+
+```{r}
+old.monthly.dividendyield <- 
+        read.csv("D:\\MyR\\quantprog\\forallAstock\\Acollectdata\\monthly.dividendyield.csv", 
+                                  stringsAsFactors = FALSE)
+```
+
+```{r}
+new.monthly.dividendyield <- cbind(
+        old.monthly.dividendyield[,-ncol(old.monthly.dividendyield)], 
+        monthly.dividendyield[,-c(1:2)]) 
+```
+
+
+```{r}
+# monthly.dividendyield <- monthly.dividendyield[,-1]
+
+```
+
+
+
+
+```{r}
+write.csv(new.monthly.dividendyield[,-1], "monthly.dividendyield.csv")
+
+```
+
+
+
+

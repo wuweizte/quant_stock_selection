@@ -1,0 +1,119 @@
+---
+title: "Quant"
+author: "Wu Wei"
+date: "2018-1-25"
+output: html_document
+---
+
+
+
+## Library input
+```{r}
+rm(list = ls())
+
+suppressMessages(library(lubridate))
+suppressMessages(library(caret))
+
+suppressMessages(library(WindR))
+w.start()
+
+```
+
+## Data Input
+
+```{r}
+w_wset_data<-w.wset('sectorconstituent','date=2018-01-25;sectorid=a001010100000000')
+
+stockcode <- w_wset_data$Data$wind_code
+
+```
+
+
+```{r}
+
+w_tdays_data<-w.tdays("2017-12-1","2018-5-29","Period=M")
+
+tdate <- as.character(w_tdays_data$Data$DATETIME)
+
+tdate <- gsub("-","",tdate)
+```
+
+
+
+
+```{r}
+####前5大股东持股比例之和
+
+# stockcode = "300654.SZ"
+
+for(i in 1:length(tdate)){
+
+# for(i in 1:2){
+        
+       tradedatepara <- paste0('tradeDate=', tdate[i])
+
+
+       w_wss_holder_sumpcttop5<-w.wss(stockcode,
+                         'holder_sumpcttop5',
+                         tradedatepara)
+
+        if(i == 1){
+                monthly.holder.sumpcttop5 <- w_wss_holder_sumpcttop5$Data
+                
+        }else{
+
+                monthly.holder.sumpcttop5 <- cbind(monthly.holder.sumpcttop5,
+                                            w_wss_holder_sumpcttop5$Data$HOLDER_SUMPCTTOP5)
+
+                                                
+        }
+
+
+}
+```
+
+
+
+
+
+
+
+```{r}
+colnames(monthly.holder.sumpcttop5) <- c("code", paste0("d",tdate))
+
+row.names(monthly.holder.sumpcttop5) <- stockcode
+
+```
+
+```{r}
+monthly.holder.sumpcttop5[monthly.holder.sumpcttop5 == "NaN"] <- NA
+
+
+```
+
+
+
+```{r}
+old.monthly.holder.sumpcttop5 <- 
+        read.csv("D:\\MyR\\quantprog\\forallAstock\\Acollectdata\\monthly.holder.sumpcttop5.csv", 
+                                  stringsAsFactors = FALSE)
+```
+
+```{r}
+new.monthly.holder.sumpcttop5 <- cbind(
+        old.monthly.holder.sumpcttop5[,-ncol(old.monthly.holder.sumpcttop5)], 
+        monthly.holder.sumpcttop5[,-c(1:3)]) 
+```
+
+
+```{r}
+# monthly.holder.sumpcttop5 <- monthly.holder.sumpcttop5[,-1]
+```
+
+
+
+```{r}
+write.csv(new.monthly.holder.sumpcttop5[,-1], "monthly.holder.sumpcttop5.csv")
+```
+
+

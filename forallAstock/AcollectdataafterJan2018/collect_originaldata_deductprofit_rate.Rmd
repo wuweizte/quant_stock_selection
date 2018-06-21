@@ -1,0 +1,121 @@
+---
+title: "Quant"
+author: "Wu Wei"
+date: "2018-1-25"
+output: html_document
+---
+
+
+
+## Library input
+```{r}
+rm(list = ls())
+
+suppressMessages(library(lubridate))
+suppressMessages(library(caret))
+
+suppressMessages(library(WindR))
+w.start()
+
+```
+
+## Data Input
+
+```{r}
+w_wset_data<-w.wset('sectorconstituent','date=2018-01-25;sectorid=a001010100000000')
+
+stockcode <- w_wset_data$Data$wind_code
+
+
+```
+
+
+```{r}
+
+w_tdays_data<-w.tdays("2017-12-1","2018-5-29","Period=M")
+
+tdate <- as.character(w_tdays_data$Data$DATETIME)
+
+tdate <- gsub("-","",tdate)
+```
+
+
+
+
+
+
+```{r}
+#####扣除非经常性损益后的净利润
+
+for(i in 1:length(tdate)){
+
+# for(i in 1:2){
+
+       tradedatepara <- paste0('tradeDate=', tdate[i])
+       
+       w_wss_deductprofit_ttm<-w.wss(stockcode,'fa_deductprofit_ttm',tradedatepara)
+
+
+        if(i == 1){
+                monthly.deductprofit.ttm <- w_wss_deductprofit_ttm$Data
+                
+        }else{
+                monthly.deductprofit.ttm <- cbind(monthly.deductprofit.ttm, 
+                                            w_wss_deductprofit_ttm$Data$FA_DEDUCTPROFIT_TTM)
+
+
+        }
+
+}
+```
+
+```{r}
+colnames(monthly.deductprofit.ttm) <- c("code", paste0("d",tdate))
+
+row.names(monthly.deductprofit.ttm) <- paste0("X",stockcode)
+
+```
+
+```{r}
+monthly.deductprofit.rate <- t(monthly.deductprofit.ttm[,-1])
+
+monthly.deductprofit.rate <- as.data.frame(monthly.deductprofit.rate)
+
+monthly.deductprofit.rate[monthly.deductprofit.rate == "NaN"] <- NA
+```
+
+
+```{r}
+old.monthly.deductprofit.rate <- 
+        read.csv("D:\\MyR\\quantprog\\forallAstock\\Acollectdata\\originaldata\\originaldata.deductprofit.rate.csv", 
+                                  stringsAsFactors = FALSE)
+```
+
+```{r}
+row.names(old.monthly.deductprofit.rate) <- old.monthly.deductprofit.rate$X
+
+old.monthly.deductprofit.rate <- old.monthly.deductprofit.rate[,-1]
+```
+
+```{r}
+# old.monthly.deductprofit.rate[is.na(old.monthly.deductprofit.rate)] <- "NaN"
+```
+
+
+```{r}
+new.monthly.deductprofit.rate <- rbind(
+        old.monthly.deductprofit.rate[-nrow(old.monthly.deductprofit.rate),],
+        monthly.deductprofit.rate[-1,])
+```
+
+
+
+```{r}
+
+write.csv(new.monthly.deductprofit.rate, 
+          "D:\\MyR\\quantprog\\forallAstock\\AcollectdataafterJan2018\\originaldata\\originaldata.deductprofit.rate.csv")
+
+
+```
+
+

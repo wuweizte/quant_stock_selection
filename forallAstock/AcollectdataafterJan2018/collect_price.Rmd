@@ -1,0 +1,101 @@
+---
+title: "Collect new data of price"
+author: "Wu Wei"
+date: "2018-5-29"
+output: html_document
+---
+
+
+
+## Library input
+```{r}
+rm(list = ls())
+
+suppressMessages(library(lubridate))
+suppressMessages(library(caret))
+
+suppressMessages(library(WindR))
+w.start()
+
+```
+
+## Data Input
+
+```{r}
+w_wset_data<-w.wset('sectorconstituent','date=2018-01-25;sectorid=a001010100000000')
+
+stockcode <- w_wset_data$Data$wind_code
+
+```
+
+
+
+```{r}
+
+w_tdays_data<-w.tdays("2017-12-1","2018-5-29","Period=M")
+
+tdate <- as.character(w_tdays_data$Data$DATETIME)
+
+tdate <- gsub("-","",tdate)
+```
+
+```{r}
+
+for(i in 1:length(tdate)){
+
+
+       tradedatepara <- paste0('tradeDate=', tdate[i])
+       
+
+       ### the price may be NaN if the IPO data is later than 2013-12-01
+       w_wss_price <- w.wss( stockcode,
+                           'close',
+                           tradedatepara,
+                           'priceAdj=F',
+                           'cycle=D')
+       
+
+        if(i == 1){
+                monthly.price.data <- w_wss_price$Data
+
+        }else{
+                monthly.price.data <- cbind(monthly.price.data,
+                                            w_wss_price$Data$CLOSE)
+                
+
+        }
+
+
+}
+```
+
+
+
+
+```{r}
+colnames(monthly.price.data) <- c("code", paste0("d",tdate))
+row.names(monthly.price.data) <- monthly.price.data[,"code"]
+
+
+```
+
+
+
+```{r}
+old.monthly.price.data <- 
+        read.csv("D:\\MyR\\quantprog\\forallAstock\\Acollectdata\\originaldata\\original.price.data.csv", 
+                                  stringsAsFactors = FALSE)
+```
+
+```{r}
+new.monthly.price.data <- cbind(old.monthly.price.data, monthly.price.data[,-c(1:3)]) 
+```
+
+
+```{r}
+
+write.csv(new.monthly.price.data[,-1], "originaldata\\original.price.data.csv")
+
+```
+
+

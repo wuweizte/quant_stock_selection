@@ -1,0 +1,104 @@
+---
+title: "Quant"
+author: "Wu Wei"
+date: "2018-1-25"
+output: html_document
+---
+
+
+
+## Library input
+```{r}
+rm(list = ls())
+
+suppressMessages(library(lubridate))
+suppressMessages(library(caret))
+
+suppressMessages(library(WindR))
+w.start()
+
+```
+
+## Data Input
+
+```{r}
+w_wset_data<-w.wset('sectorconstituent','date=2018-01-25;sectorid=a001010100000000')
+
+stockcode <- w_wset_data$Data$wind_code
+
+```
+
+
+```{r}
+
+w_tdays_data<-w.tdays("2017-12-1","2018-5-29","Period=M")
+
+tdate <- as.character(w_tdays_data$Data$DATETIME)
+
+tdate <- gsub("-","",tdate)
+```
+
+
+
+
+
+```{r}
+#################  Trade Status
+
+for(i in 1:length(tdate)){
+
+# for(i in 1:2){
+
+       tradedatepara <- paste0('tradeDate=', tdate[i])
+
+       w_wss_trade_status<-w.wss(stockcode,'trade_status',tradedatepara)
+       
+        if(i == 1){
+                monthly.trade.status <- w_wss_trade_status$Data
+        }else{
+                monthly.trade.status <- cbind(monthly.trade.status, 
+                                            w_wss_trade_status$Data$TRADE_STATUS)
+                
+        }
+
+
+}
+```
+
+
+```{r}
+colnames(monthly.trade.status) <- c("code", paste0("d",tdate))
+row.names(monthly.trade.status) <- monthly.trade.status[,"code"]
+
+```
+
+
+```{r}
+old.monthly.trade.status <- 
+        read.csv("D:\\MyR\\quantprog\\forallAstock\\Acollectdata\\monthly.trade.status.csv", 
+                                  stringsAsFactors = FALSE)
+```
+
+```{r}
+new.monthly.trade.status <- cbind(
+        old.monthly.trade.status[,-ncol(old.monthly.trade.status)], 
+        monthly.trade.status[,-c(1:2)]) 
+```
+
+
+
+
+```{r}
+# monthly.trade.status <- monthly.trade.status[,-1]
+
+```
+
+
+
+
+```{r}
+write.csv(new.monthly.trade.status[,-1], "monthly.trade.status.csv")
+
+```
+
+

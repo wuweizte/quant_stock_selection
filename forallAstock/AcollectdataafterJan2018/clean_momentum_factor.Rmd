@@ -1,0 +1,98 @@
+---
+title: "Quant"
+author: "Wu Wei"
+date: "2018-1-25"
+output: html_document
+---
+
+
+
+## Library input
+```{r}
+rm(list = ls())
+
+suppressMessages(library(lubridate))
+suppressMessages(library(caret))
+
+
+```
+
+## Data Input
+
+```{r}
+original.price.data <- 
+        read.csv("originaldata\\original.price.data.csv", 
+                                      stringsAsFactors = FALSE)
+
+
+```
+
+
+## Data process
+```{r}
+row.names(original.price.data) <- original.price.data$X
+
+original.price.data <- original.price.data[,-1]
+
+```
+
+```{r}
+monthly.momentum.3month <- diff(ts(log(t(original.price.data))), lag = 3)
+
+monthly.momentum.6month <- diff(ts(log(t(original.price.data))), lag = 6)
+
+monthly.momentum.12month <- diff(ts(log(t(original.price.data))), lag = 12)
+```
+
+```{r}
+# row.names.momentum.3month <- colnames(original.price.data)[-c(1:3,length(original.price.data))]
+# 
+# row.names.momentum.6month <- colnames(original.price.data)[-c(1:6,length(original.price.data))]
+# 
+# row.names.momentum.12month <- colnames(original.price.data)[-c(1:12,length(original.price.data))]
+
+row.names.momentum.3month <- colnames(original.price.data)[-c(1:3)]
+
+row.names.momentum.6month <- colnames(original.price.data)[-c(1:6)]
+
+row.names.momentum.12month <- colnames(original.price.data)[-c(1:12)]
+
+```
+
+```{r}
+# monthly.momentum.3month <- monthly.momentum.3month[-nrow(monthly.momentum.3month),]
+# 
+# monthly.momentum.6month <- monthly.momentum.6month[-nrow(monthly.momentum.6month),]
+# 
+# monthly.momentum.12month <- monthly.momentum.12month[-nrow(monthly.momentum.12month),]
+```
+
+```{r}
+row.names(monthly.momentum.3month) <- row.names.momentum.3month
+
+row.names(monthly.momentum.6month) <- row.names.momentum.6month
+
+row.names(monthly.momentum.12month) <- row.names.momentum.12month
+
+```
+
+```{r}
+monthly.momentum.3month <- monthly.momentum.3month[-c(1:9),]
+
+monthly.momentum.6month <- monthly.momentum.6month[-c(1:6),]
+
+
+```
+
+
+
+```{r}
+write.csv(t(monthly.momentum.3month), "monthly.momentum.3month.csv")
+
+write.csv(t(monthly.momentum.6month), "monthly.momentum.6month.csv")
+
+write.csv(t(monthly.momentum.12month), "monthly.momentum.12month.csv")
+
+```
+
+

@@ -1,0 +1,95 @@
+---
+title: "Quant"
+author: "Wu Wei"
+date: "2018-1-25"
+output: html_document
+---
+
+
+
+## Library input
+```{r}
+rm(list = ls())
+
+suppressMessages(library(lubridate))
+suppressMessages(library(caret))
+suppressMessages(library(dplyr))
+suppressMessages(library(WindR))
+w.start()
+
+```
+
+## Data Input
+```{r}
+
+w_tdays_data<-w.tdays("2017-12-1","2018-5-29","Period=M")
+
+tdate <- as.character(w_tdays_data$Data$DATETIME)
+
+tdate <- gsub("-","",tdate)
+```
+
+
+
+```{r}
+all.industry.prop.list <- list()
+
+for(i in 1:length(tdate)){
+
+        w_wset_index<-w.wset('indexconstituent',paste0('date=',tdate[i],';windcode=000300.SH'))
+        
+        w_wss_industry <- w.wss(w_wset_index$Data$wind_code,
+                                'industry_citic',
+                                paste0("date=",tdate[i]),
+                                'industryType=1')
+        
+        
+        industry.prop.detail <- data.frame(weight = w_wset_index$Data$i_weight,
+                                           industry = w_wss_industry$Data$INDUSTRY_CITIC)
+        
+        industrytype <- group_by(industry.prop.detail, industry)
+        
+        df.industry.prop <- summarize(industrytype, industry.prop = sum(weight))
+        
+        w_wset_all_stock<-w.wset('sectorconstituent',paste0('date=',tdate[i],';sectorid=a001010100000000'))
+        
+        w_wss_all_industry <- w.wss(w_wset_all_stock$Data$wind_code,
+                                    'industry_citic',
+                                    paste0("date=",tdate[i]),
+                                    'industryType=1')
+        
+        
+        all.industry.type <- levels(as.factor(w_wss_all_industry$Data$INDUSTRY_CITIC))
+        
+        all.industry.prop <- data.frame(industry = all.industry.type, prop = 0)
+        
+        all.industry.prop$prop[all.industry.prop$industry %in% df.industry.prop$industry] <- df.industry.prop$industry.prop
+
+        all.industry.prop.list[[paste0("d",tdate[i])]] <- all.industry.prop
+}
+```
+
+```{r}
+new.all.industry.prop.list <- all.industry.prop.list
+rm(all.industry.prop.list)
+
+load("D:\\MyR\\quantprog\\forhushen300\\Acollectdata\\all.industry.prop.list")
+
+old.all.industry.prop.list <- all.industry.prop.list
+```
+
+```{r}
+new.name <- names(new.all.industry.prop.list)
+
+for(i in 1:length(new.name)){
+        if (!(new.name[i] %in% names(all.industry.prop.list))){
+                all.industry.prop.list[[new.name[i]]] <- new.all.industry.prop.list[[new.name[i]]]
+        }
+}
+```
+
+
+```{r}
+save(all.industry.prop.list, file = "all.industry.prop.list")
+
+```

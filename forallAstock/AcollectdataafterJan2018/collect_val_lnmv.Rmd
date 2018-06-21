@@ -1,0 +1,93 @@
+---
+title: "Quant"
+author: "Wu Wei"
+date: "2018-6-7"
+output: html_document
+---
+
+
+
+## Library input
+```{r}
+rm(list = ls())
+
+suppressMessages(library(lubridate))
+suppressMessages(library(caret))
+
+suppressMessages(library(WindR))
+w.start()
+
+```
+
+## Data Input
+
+```{r}
+w_wset_data<-w.wset('sectorconstituent','date=2018-01-25;sectorid=a001010100000000')
+
+stockcode <- w_wset_data$Data$wind_code
+
+
+```
+
+
+```{r}
+
+w_tdays_data<-w.tdays("2017-12-1","2018-5-29","Period=M")
+
+tdate <- as.character(w_tdays_data$Data$DATETIME)
+
+tdate <- gsub("-","",tdate)
+```
+
+```{r}
+####对数市值
+
+
+for(i in 1:length(tdate)){
+
+# for(i in 1:2){
+
+       tradedatepara <- paste0('tradeDate=', tdate[i])
+       w_wss_val_lnmv<-w.wss(stockcode,'val_lnmv',tradedatepara)
+
+        if(i == 1){
+                monthly.val.lnmv <- w_wss_val_lnmv$Data
+                
+        }else{
+
+                monthly.val.lnmv <- cbind(monthly.val.lnmv,
+                                            w_wss_val_lnmv$Data$VAL_LNMV)
+
+                                
+        }
+
+
+}
+```
+
+```{r}
+colnames(monthly.val.lnmv) <- c("code", paste0("d",tdate))
+
+row.names(monthly.val.lnmv) <- stockcode
+
+```
+
+
+```{r}
+old.monthly.val.lnmv <- 
+        read.csv("D:\\MyR\\quantprog\\forallAstock\\Acollectdata\\monthly.val.lnmv.csv", 
+                                  stringsAsFactors = FALSE)
+```
+
+```{r}
+new.monthly.val.lnmv <- cbind(
+        old.monthly.val.lnmv[,-ncol(old.monthly.val.lnmv)], 
+        monthly.val.lnmv[,-c(1:2)]) 
+```
+
+```{r}
+write.csv(new.monthly.val.lnmv[,-1], "monthly.val.lnmv.csv")
+
+```
+
+

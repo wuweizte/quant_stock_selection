@@ -1,0 +1,112 @@
+---
+title: "Quant"
+author: "Wu Wei"
+date: "2018-1-25"
+output: html_document
+---
+
+
+
+## Library input
+```{r}
+rm(list = ls())
+
+suppressMessages(library(lubridate))
+suppressMessages(library(caret))
+
+suppressMessages(library(WindR))
+w.start()
+
+```
+
+## Data Input
+
+```{r}
+w_wset_data<-w.wset('sectorconstituent','date=2018-01-25;sectorid=a001010100000000')
+
+stockcode <- w_wset_data$Data$wind_code
+
+```
+
+
+```{r}
+
+w_tdays_data<-w.tdays("2017-12-1","2018-5-29","Period=M")
+
+tdate <- as.character(w_tdays_data$Data$DATETIME)
+
+tdate <- gsub("-","",tdate)
+```
+
+
+
+
+```{r}
+####万德平均评级
+
+
+for(i in 1:length(tdate)){
+
+# for(i in 1:1){
+
+       tradedatepara <- paste0('tradeDate=', tdate[i])
+       w_wss_rating_avg<-w.wss(stockcode,'rating_avg',tradedatepara)
+
+        if(i == 1){
+                monthly.rating.avg <- w_wss_rating_avg$Data
+                
+        }else{
+
+                monthly.rating.avg <- cbind(monthly.rating.avg,
+                                            w_wss_rating_avg$Data$RATING_AVG)
+
+                                
+        }
+
+
+}
+```
+
+
+
+
+
+```{r}
+colnames(monthly.rating.avg) <- c("code", paste0("d",tdate))
+
+row.names(monthly.rating.avg) <- stockcode
+
+```
+
+```{r}
+monthly.rating.avg[monthly.rating.avg == "NaN"] <- NA
+
+
+```
+
+
+```{r}
+old.monthly.rating.avg <- 
+        read.csv("D:\\MyR\\quantprog\\forallAstock\\Acollectdata\\monthly.rating.avg.csv", 
+                                  stringsAsFactors = FALSE)
+```
+
+```{r}
+new.monthly.rating.avg <- cbind(
+        old.monthly.rating.avg[,-ncol(old.monthly.rating.avg)], 
+        monthly.rating.avg[,-c(1:2)]) 
+```
+
+
+
+
+
+
+
+```{r}
+
+
+write.csv(new.monthly.rating.avg[,-1], "monthly.rating.avg.csv")
+```
+
+
