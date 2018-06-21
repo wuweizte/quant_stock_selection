@@ -1,7 +1,7 @@
 ---
-title: "Multi_colinearity_test"
+title: "Heteroscedasticity test"
 author: "Wu Wei"
-date: "2018-2-23"
+date: "2018-5-14"
 output: html_document
 ---
 
@@ -23,13 +23,17 @@ library(sca)
 
 ```{r}
 
-monthly.price.data <- 
-        read.csv("D:\\MyR\\quantprog\\forallAstock\\Acollectdata\\monthly.price.data.csv", 
-                               stringsAsFactors = FALSE)
+# monthly.price.data <- 
+#         read.csv("D:\\MyR\\quantprog\\forallAstock\\Acollectdata\\monthly.price.data.csv", 
+#                                stringsAsFactors = FALSE)
+
+standardlized.monthly.price <- 
+        read.csv("D:\\MyR\\quantprog\\forallAstock\\Bstandardlizefactor\\standardlized.monthly.price.csv", 
+                                                      stringsAsFactors = FALSE)
 
 
-standardlized.monthly.pettm.data <- 
-        read.csv("D:\\MyR\\quantprog\\forallAstock\\Bstandardlizefactor\\standardlized.monthly.pettm.data.csv", 
+standardlized.monthly.epttm.data <- 
+        read.csv("D:\\MyR\\quantprog\\forallAstock\\Bstandardlizefactor\\standardlized.monthly.epttm.data.csv", 
                                                     stringsAsFactors = FALSE)
 
 
@@ -52,32 +56,46 @@ standardlized.monthly.val.lnmv <-
 
 ```
 
+```{r}
+# row.names(monthly.price.data) <- monthly.price.data[,1]
+# monthly.price.data <- monthly.price.data[,-1]
+# 
+# monthly.price.data <- as.matrix(monthly.price.data)
+```
+
+
+```{r}
+row.names(standardlized.monthly.price) <- standardlized.monthly.price[,1]
+standardlized.monthly.price <- standardlized.monthly.price[,-1]
+
+standardlized.monthly.price <- as.matrix(standardlized.monthly.price)
+```
+
+
 
 ## Data Processing
 
-```{r}
-row.names(monthly.price.data) <- monthly.price.data[,1]
-monthly.price.data <- monthly.price.data[,-1]
 
-monthly.price.data <- as.matrix(monthly.price.data)
+```{r}
+# rm <- matrix(apply(monthly.price.data,2,mean),1)
+# rtn <- monthly.price.data - matrix(1,nrow(monthly.price.data),1) %*% rm
+
+rtn <- standardlized.monthly.price
+
+
+
 ```
 
-```{r}
-rm <- matrix(apply(monthly.price.data,2,mean),1)
-rtn <- monthly.price.data - matrix(1,nrow(monthly.price.data),1) %*% rm
-
-```
-
 
 ```{r}
-month.length <- ncol(standardlized.monthly.pettm.data) - 1
+month.length <- ncol(standardlized.monthly.epttm.data) - 2
 
 f.result <- numeric(month.length)
 
 for(i in 1:month.length){
 # for(i in 1:1){
         
-        var.table <- cbind( standardlized.monthly.pettm.data[,(i + 1)],
+        var.table <- cbind( standardlized.monthly.epttm.data[,(i + 1)],
               standardlized.monthly.tech.turnoverrate60[,(i + 1)],
               standardlized.monthly.deductprofit.simple.rate[,(i + 1)],
               standardlized.monthly.momentum.12month[,(i + 1)],
@@ -99,7 +117,7 @@ mean(abs(f.result))
 
 median(abs(f.result))
 
-pf(5.4, 5, 3476, lower.tail = FALSE)
+pf(8.7, 5, 3476, lower.tail = FALSE)
 ```
 
 

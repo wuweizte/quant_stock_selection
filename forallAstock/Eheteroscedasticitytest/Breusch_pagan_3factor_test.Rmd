@@ -23,9 +23,13 @@ library(sca)
 
 ```{r}
 
-monthly.price.data <- 
-        read.csv("D:\\MyR\\quantprog\\forallAstock\\Acollectdata\\monthly.price.data.csv", 
-                               stringsAsFactors = FALSE)
+# monthly.price.data <- 
+#         read.csv("D:\\MyR\\quantprog\\forallAstock\\Acollectdata\\monthly.price.data.csv", 
+#                                stringsAsFactors = FALSE)
+
+standardlized.monthly.price <- 
+        read.csv("D:\\MyR\\quantprog\\forallAstock\\Bstandardlizefactor\\standardlized.monthly.price.csv", 
+                                                      stringsAsFactors = FALSE)
 
 standardlized.monthly.holder.sumpcttop5 <- 
         read.csv("D:\\MyR\\quantprog\\forallAstock\\Bstandardlizefactor\\standardlized.monthly.holder.sumpcttop5.csv", 
@@ -43,19 +47,30 @@ standardlized.monthly.tech.turnoverrate60 <-
 
 ```
 
+```{r}
+# row.names(monthly.price.data) <- monthly.price.data[,1]
+# monthly.price.data <- monthly.price.data[,-1]
+# 
+# monthly.price.data <- as.matrix(monthly.price.data)
+```
+
+```{r}
+row.names(standardlized.monthly.price) <- standardlized.monthly.price[,1]
+standardlized.monthly.price <- standardlized.monthly.price[,-1]
+
+standardlized.monthly.price <- as.matrix(standardlized.monthly.price)
+```
+
+
 
 ## Data Processing
 
 ```{r}
-row.names(monthly.price.data) <- monthly.price.data[,1]
-monthly.price.data <- monthly.price.data[,-1]
+# rm <- matrix(apply(monthly.price.data,2,mean),1)
+# rtn <- monthly.price.data - matrix(1,nrow(monthly.price.data),1) %*% rm
 
-monthly.price.data <- as.matrix(monthly.price.data)
-```
+rtn <- standardlized.monthly.price
 
-```{r}
-rm <- matrix(apply(monthly.price.data,2,mean),1)
-rtn <- monthly.price.data - matrix(1,nrow(monthly.price.data),1) %*% rm
 
 ```
 
@@ -88,7 +103,7 @@ mean(abs(f.result))
 
 median(abs(f.result))
 
-pf(2.7, 5, 3476, lower.tail = FALSE)
+pf(4, 5, 3476, lower.tail = FALSE)
 ```
 
 
