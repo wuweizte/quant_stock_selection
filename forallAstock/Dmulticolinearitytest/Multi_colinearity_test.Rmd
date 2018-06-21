@@ -1,7 +1,7 @@
 ---
 title: "Multi_colinearity_test"
 author: "Wu Wei"
-date: "2018-2-23"
+date: "2018-6-5"
 output: html_document
 ---
 
@@ -27,8 +27,8 @@ standardlized.monthly.holder.sumpcttop5 <-
         read.csv("D:\\MyR\\quantprog\\forallAstock\\Bstandardlizefactor\\standardlized.monthly.holder.sumpcttop5.csv", 
                                                     stringsAsFactors = FALSE)
 
-standardlized.monthly.pettm.data <- 
-        read.csv("D:\\MyR\\quantprog\\forallAstock\\Bstandardlizefactor\\standardlized.monthly.pettm.data.csv", 
+standardlized.monthly.epttm.data <- 
+        read.csv("D:\\MyR\\quantprog\\forallAstock\\Bstandardlizefactor\\standardlized.monthly.epttm.data.csv", 
                                                     stringsAsFactors = FALSE)
 
 standardlized.monthly.risk.variance60 <- 
@@ -66,8 +66,20 @@ standardlized.monthly.momentum.6month <-
         read.csv("D:\\MyR\\quantprog\\forallAstock\\Bstandardlizefactor\\standardlized.monthly.momentum.6month.csv", 
                                                     stringsAsFactors = FALSE)
 
+standardlized.monthly.momentum.3month <- 
+        read.csv("D:\\MyR\\quantprog\\forallAstock\\Bstandardlizefactor\\standardlized.monthly.momentum.3month.csv", 
+                                                    stringsAsFactors = FALSE)
+
+```
+
+```{r}
+
 standardlized.monthly.deductprofit.simple.rate <- 
         read.csv("D:\\MyR\\quantprog\\forallAstock\\Bstandardlizefactor\\standardlized.monthly.deductprofit.simple.rate.csv", 
+                                                    stringsAsFactors = FALSE)
+
+standardlized.monthly.dividendyield <- 
+        read.csv("D:\\MyR\\quantprog\\forallAstock\\Bstandardlizefactor\\standardlized.monthly.dividendyield.csv", 
                                                     stringsAsFactors = FALSE)
 
 ```
@@ -79,15 +91,15 @@ standardlized.monthly.deductprofit.simple.rate <-
 ```{r}
 month.length <- ncol(standardlized.monthly.holder.sumpcttop5) - 1
 
-cor.table.array <- array(NA, dim = c(10,10,month.length))
+cor.table.array <- array(NA, dim = c(12,12,month.length))
 
-zero.ind <- array(c(1:10,1:10),dim = c(10,2))
+zero.ind <- array(c(1:12,1:12),dim = c(12,2))
 
 for(i in 1:month.length){
 # for(i in 1:1){
         
         var.table <- cbind(standardlized.monthly.holder.sumpcttop5[,(i + 1)],
-              standardlized.monthly.pettm.data[,(i + 1)],
+              standardlized.monthly.epttm.data[,(i + 1)],
               standardlized.monthly.risk.variance60[,(i + 1)],
               standardlized.monthly.roe.data[,(i + 1)],
               standardlized.monthly.tech.turnoverrate60[,(i + 1)],
@@ -95,7 +107,9 @@ for(i in 1:month.length){
               standardlized.monthly.rating.avg[,(i + 1)],
               standardlized.monthly.momentum.12month[,(i + 1)],
               standardlized.monthly.momentum.6month[,(i + 1)],
-              standardlized.monthly.deductprofit.simple.rate[,(i + 1)])
+              standardlized.monthly.momentum.3month[,(i + 1)],
+              standardlized.monthly.deductprofit.simple.rate[,(i + 1)],
+              standardlized.monthly.dividendyield[,(i + 1)])
         
 
         cor.result <- cor(var.table)
@@ -110,7 +124,7 @@ for(i in 1:month.length){
 
 ```{r}
 data.frame(name = c("holder.sumpcttop5",
-              "pettm.data",
+              "epttm.data",
               "risk.variance60",
               "roe.data",
               "tech.turnoverrate60",
@@ -118,7 +132,9 @@ data.frame(name = c("holder.sumpcttop5",
               "rating.avg",
               "momentum.12month",
               "momentum.6month",
-              "deductprofit.simple.rate")
+              "momentum.3month",
+              "deductprofit.simple.rate",
+              "dividendyield")
 )
 ```
 
@@ -132,10 +148,18 @@ which(mean.test.result > 0.6, arr.ind = TRUE)
 median.test.result <- apply(cor.table.array, c(1,2), function(x) median(abs(x)))
 which(median.test.result > 0.6, arr.ind = TRUE)
 
+t.test(abs(cor.table.array[2,4,]))
 
-t.test(abs(cor.table.array[5,3,]))
+t.test(abs(cor.table.array[3,5,]))
 
 t.test(abs(cor.table.array[8,9,]))
 
+t.test(abs(cor.table.array[9,10,]))
+
+t.test(abs(cor.table.array[8,10,]))
+
+t.test(abs(cor.table.array[4,12,]))
+
+t.test(abs(cor.table.array[2,12,]))
 ```
 
