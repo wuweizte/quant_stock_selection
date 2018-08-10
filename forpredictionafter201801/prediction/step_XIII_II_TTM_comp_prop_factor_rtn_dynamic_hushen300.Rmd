@@ -35,7 +35,7 @@ load("D:\\MyR\\quantprog\\forallAstock\\Acollectdata\\stock.code.name")
 
 load("result.investion.target.145")
 
-load("D:\\MyR\\quantprog\\forpredictionafter201801\\eleven_factor_model\\stock.cov.matrix.list")
+load("stock.cov.matrix.list")
 ```
 
 
@@ -97,18 +97,16 @@ com.prop.list <- list()
 
 
 ```{r}
-df <- com.prop.list[[1]]
-
-
-
+# df <- com.prop.list[[1]]
+# 
+# 
+# file.name <- paste0("com.prop.list_",colnames(result.investion.target.145),".csv")
+# 
+# write.csv(df[df$prop >0.5 ,], file = file.name)
 ```
 
 
 ```{r}
-file.name <- paste0("com.prop.list_",colnames(result.investion.target.145),".csv")
-
-write.csv(df[df$prop >0.5 ,], file = file.name)
+save(com.prop.list, file = "step.XIII.II.com.prop.list")
 ```
-
-
 

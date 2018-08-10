@@ -10,7 +10,7 @@ output: html_document
 ```{r}
 rm(list = ls())
 
-load("D:\\MyR\\quantprog\\forpredictionafter201801\\eleven_factor_model\\comparison.F.hat.g")
+load("comparison.F.hat.g")
 load("result.factor.forecast")
 
 # load("result.factor.forecast.comparison.12month")

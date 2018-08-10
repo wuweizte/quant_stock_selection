@@ -1,0 +1,133 @@
+---
+title: "11 factor rtn"
+author: "Wu Wei"
+date: "2018-6-28"
+output: html_document
+---
+
+## 说明
+
+上月的持仓股票可能在本月底发生停牌，从而无法调整其比例。
+此时将停牌股票视为债券，与二次规划的股票列表合并。
+
+停牌股票与本月规划列表合并后，本月规划列表比例相应下调。
+
+## Library input
+```{r}
+rm(list = ls())
+
+suppressMessages(library(lubridate))
+suppressMessages(library(caret))
+suppressMessages(library(plyr))
+
+library(sca)
+library(forecast)
+
+```
+
+## Data Input
+
+```{r}
+
+# monthly.trade.status <-
+#         read.csv(
+#         "D:\\MyR\\quantprog\\forallAstock\\Acollectdata\\monthly.trade.status.csv",
+#         stringsAsFactors = FALSE)
+
+monthly.trade.status <-
+        read.csv(
+        "D:\\MyR\\quantprog\\forallAstock\\AcollectdataafterJan2018\\monthly.trade.status.csv",
+        stringsAsFactors = FALSE)
+
+```
+
+
+```{r}
+load("step.XIII.II.com.prop.list")
+com.prop.list.include.ting <- com.prop.list
+
+com.prop <- com.prop.list.include.ting[[1]]
+
+colnames(com.prop)[1] <- "code"
+
+
+date <- names(com.prop.list.include.ting)[1]
+
+rm(com.prop.list)
+
+```
+
+```{r}
+load("D:\\MyR\\quantprog\\forpredictionafter201801\\eleven_factor_model\\step.XIII.II.com.prop.list")
+# com.prop.list.include.ting <- com.prop.list
+
+old.com.prop <- com.prop.list[[length(names(com.prop.list))]]
+
+rm(com.prop.list)
+
+```
+
+
+## Data Processing
+
+
+
+
+```{r}
+
+
+# max.length <- length(names(com.prop.list.include.ting))
+# 
+# old.percentile.record <- numeric(max.length)
+
+# for(i in 2:max.length){
+        
+# for(i in 2:3){
+
+
+        
+        sub.monthly.trade.status <- monthly.trade.status[,c("X", date)]
+        
+        ting.pai.stock <- sub.monthly.trade.status[sub.monthly.trade.status[,2] != "交易", 1]
+        
+        ### 上月包含在仓位中，本月发生停牌，所以本月要继续包含
+
+        sub.old.com.prop <- old.com.prop[(old.com.prop$code %in% ting.pai.stock) & (old.com.prop$prop > 0),]
+        
+        ### 本月列表中股票的原有比例相应下调(如果停牌期一直延续，则这个下降的比例会跨月保持，此时和com.prop.list比较时要注意)
+        old.percentile <- sum(sub.old.com.prop$prop)
+
+        # old.percentile.record[i] <- old.percentile
+        
+        new.com.prop <- com.prop
+
+        new.com.prop$prop <- new.com.prop$prop * (1 - old.percentile / 100)
+
+        ### 合并停牌股票与本月列表
+        new.com.prop <- rbind(new.com.prop, sub.old.com.prop)
+
+        new.com.prop <- new.com.prop[order(as.character(new.com.prop$code)),]
+
+        com.prop.list.include.ting[[1]] <- new.com.prop
+# }
+```
+
+
+```{r}
+# summary(old.percentile.record)
+```
+
+
+```{r}
+# save(com.prop.list.include.ting, file = "step.XIII.II.U.II.keep.tingpai.com.prop.list")
+```
+
+
+```{r}
+df <- com.prop.list.include.ting[[1]]
+
+
+file.name <- paste0("com.prop.list_",names(com.prop.list.include.ting)[1],".csv")
+
+write.csv(df[df$prop >0.5 ,], file = file.name)
+```

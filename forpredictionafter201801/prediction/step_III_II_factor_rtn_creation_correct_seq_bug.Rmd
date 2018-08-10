@@ -95,7 +95,7 @@ monthly.trade.status <-
 
 
 ```{r}
-load("D:\\MyR\\quantprog\\forpredictionafter201801\\eleven_factor_model\\comparison.F.hat.g")
+load("comparison.F.hat.g")
 
 
 load("D:\\MyR\\quantprog\\forallAstock\\Acollectdata\\stock.code.name")
@@ -231,11 +231,11 @@ save(result.factor.forecast, file = "result.factor.forecast")
 ```
 
 ```{r}
-rm(list = ls())
-
-load(file = "result.investion.target.145")
-load(file = "result.investion.target.name.145")
-
-load(file = "result.factor.forecast")
+# rm(list = ls())
+# 
+# load(file = "result.investion.target.145")
+# load(file = "result.investion.target.name.145")
+# 
+# load(file = "result.factor.forecast")
 ```
 
